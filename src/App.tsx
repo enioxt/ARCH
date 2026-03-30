@@ -54,8 +54,12 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full bg-[#f5f5f5] text-zinc-900 font-sans">
+      {/* Development Banner */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-amber-500 text-amber-950 text-center py-1.5 text-xs font-semibold tracking-wide shadow-sm">
+        EM DESENVOLVIMENTO &mdash; EGOS Arch v0.1.0-alpha &mdash; github.com/enioxt/ARCH
+      </div>
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-zinc-200 flex flex-col h-full shadow-sm z-10">
+      <aside className="w-64 bg-white border-r border-zinc-200 flex flex-col h-full shadow-sm z-10 pt-8">
         <div className="p-6 border-b border-zinc-100">
           <div className="flex items-center gap-2 text-zinc-900 font-semibold text-lg tracking-tight">
             <div className="w-8 h-8 rounded-md bg-zinc-900 flex items-center justify-center text-white">
@@ -125,7 +129,7 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#f5f5f5]">
+      <main className="flex-1 flex flex-col h-full overflow-hidden bg-[#f5f5f5] pt-8">
         <header className="h-16 bg-white border-b border-zinc-200 flex items-center px-8 justify-between shrink-0">
           <h1 className="text-xl font-semibold text-zinc-800 tracking-tight">
             {currentView === 'export' ? 'Exportações' : navItems.find(i => i.id === currentView)?.label}

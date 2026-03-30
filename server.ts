@@ -16,10 +16,10 @@ app.use(express.json());
 // Initialize OpenAI client configured for OpenRouter
 const openai = new OpenAI({
   baseURL: "https://openrouter.ai/api/v1",
-  apiKey: "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",
+  apiKey: process.env.OPENROUTER_API_KEY || '',
   defaultHeaders: {
-    "HTTP-Referer": "https://egos-arch.com", // Optional, for OpenRouter rankings
-    "X-Title": "EGOS Arch", // Optional, for OpenRouter rankings
+    "HTTP-Referer": process.env.APP_URL || "https://arch.egos.ia.br",
+    "X-Title": "EGOS Arch",
   }
 });
 
