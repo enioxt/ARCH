@@ -30,6 +30,9 @@ COPY --from=builder /app/dist ./dist
 COPY server.ts ./
 COPY src/ai/ ./src/ai/
 
+# Copy public assets (presentation page, images)
+COPY public/ ./public/
+
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
