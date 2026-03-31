@@ -30,6 +30,7 @@ COPY --from=builder /app/dist ./dist
 COPY server.ts ./
 COPY src/ai/ ./src/ai/
 COPY src/lib/generation-engine.ts ./src/lib/generation-engine.ts
+COPY src/lib/prompt-generator.ts ./src/lib/prompt-generator.ts
 
 # Copy public assets (presentation page, images)
 COPY public/ ./public/

@@ -27,9 +27,10 @@ import VideoView from './components/views/VideoView';
 import ObservabilidadeView from './components/views/ObservabilidadeView';
 import WorkflowView from './components/views/WorkflowView';
 import ExportView from './components/views/ExportView';
+import ProjectPipeline from './components/ProjectPipeline';
 import { useProjectStore } from './store/project.store';
 
-type ViewType = 'briefing' | 'croqui' | 'planta' | 'massa3d' | 'renders' | 'video' | 'workflow' | 'observabilidade' | 'export';
+type ViewType = 'briefing' | 'croqui' | 'planta' | 'massa3d' | 'renders' | 'video' | 'pipeline' | 'workflow' | 'observabilidade' | 'export';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('briefing');
@@ -47,6 +48,7 @@ export default function App() {
     { id: 'workflow', label: 'Workflow & Rationale', icon: GitMerge },
     { id: 'planta', label: 'Planta 2D', icon: Map },
     { id: 'massa3d', label: 'Massa 3D', icon: Box },
+    { id: 'pipeline', label: 'Pipeline', icon: Wand2 },
     { id: 'renders', label: 'Renders', icon: Camera },
     { id: 'video', label: 'Vídeo', icon: Video },
     { id: 'observabilidade', label: 'Telemetria EGOS', icon: Activity },
@@ -160,6 +162,7 @@ export default function App() {
             {currentView === 'workflow' && <WorkflowView />}
             {currentView === 'planta' && <PlantaView />}
             {currentView === 'massa3d' && <Massa3DView />}
+            {currentView === 'pipeline' && <ProjectPipeline />}
             {currentView === 'renders' && <RendersView />}
             {currentView === 'video' && <VideoView />}
             {currentView === 'observabilidade' && <ObservabilidadeView />}

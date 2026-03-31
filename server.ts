@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { ARCHITECT_SYSTEM_PROMPT } from './src/ai/prompts/architect-agent.js';
 import { generate, getAvailableModels, estimateFullProjectCost, MODEL_CONFIGS } from './src/lib/generation-engine.js';
+import { generateProjectPrompts, getRequiredDeliverables, calculateTotalCost } from './src/lib/prompt-generator.js';
 
 dotenv.config();
 
@@ -243,6 +244,60 @@ Seja pratico e especifico. Inclua sempre um prompt_render para cada sugestao.`;
   } catch (error: any) {
     console.error('[ARCH] Copilot error:', error.message);
     res.status(500).json({ error: 'Failed to generate suggestions' });
+  }
+});
+
+// --- Prompt Generator (Meta-Prompt Engine) ---
+
+// Generate all prompts for a project from briefing data
+app.post('/api/prompts/generate', (req, res) => {
+  try {
+    const briefing = req.body;
+    if (!briefing.projectName || !briefing.geometry) {
+      return res.status(400).json({ error: 'projectName and geometry are required' });
+    }
+    const prompts = generateProjectPrompts(briefing);
+    const cost = calculateTotalCost(prompts);
+    res.json({ prompts, cost, totalPrompts: prompts.length });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get required deliverables checklist
+app.get('/api/prompts/deliverables', (_req, res) => {
+  res.json(getRequiredDeliverables());
+});
+
+// AI-enhanced prompt refinement: takes a basic prompt and enhances it
+app.post('/api/prompts/enhance', async (req, res) => {
+  try {
+    const { prompt, viewType, style } = req.body;
+    if (!prompt) return res.status(400).json({ error: 'prompt is required' });
+
+    const enhancePrompt = `Voce e um especialista mundial em ArchViz (visualizacao arquitetonica).
+Melhore este prompt para geracao de imagem arquitetonica, adicionando:
+1. Detalhes tecnicos de fotografia (lente, apertura, composicao)
+2. Iluminacao especifica (hora do dia, temperatura de cor, sombras)
+3. Materiais com textura realista (nao generico)
+4. Composicao seguindo regra dos tercos
+5. Profundidade com elementos em primeiro plano
+
+Prompt original: "${prompt}"
+Tipo de vista: ${viewType || 'exterior'}
+Estilo: ${style || 'rustic-modern'}
+
+Retorne APENAS o prompt melhorado, sem explicacoes. O prompt deve estar em ingles e ser otimizado para modelos como Flux, Imagen 4, ou Midjourney.`;
+
+    const completion = await openai.chat.completions.create({
+      model: "google/gemini-2.0-flash-001",
+      messages: [{ role: "user", content: enhancePrompt }],
+    });
+
+    const enhanced = completion.choices[0]?.message?.content || prompt;
+    res.json({ original: prompt, enhanced, viewType });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 });
 
