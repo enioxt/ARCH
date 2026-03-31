@@ -385,6 +385,59 @@
       margin-bottom: 24px;
     }
 
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .gallery-grid img {
+      width: 100%;
+      border-radius: 10px;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      transition: transform 0.2s, border-color 0.2s;
+      cursor: pointer;
+    }
+
+    .gallery-grid img:hover {
+      transform: scale(1.02);
+      border-color: rgba(37, 99, 235, 0.5);
+    }
+
+    .gallery-grid img.full-width {
+      grid-column: 1 / -1;
+      aspect-ratio: 16/9;
+    }
+
+    .gallery-caption {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    .gallery-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .gallery-video-wrap {
+      grid-column: 1 / -1;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .gallery-video-wrap video {
+      width: 100%;
+      display: block;
+      max-height: 400px;
+      object-fit: cover;
+    }
+
     .designs-row {
       display: flex;
       gap: 12px;
@@ -675,8 +728,29 @@
           </div>
         </div>
 
-        <div class="gallery-placeholder" id="gallery-placeholder">
-          Renders em breve — aguardando geracao
+        <div class="gallery-grid" id="gallery-grid">
+          <div class="gallery-item">
+            <img src="/images/ofuro-panoramico.png" alt="Ofuro panoramico com vista para sitio rural de MG ao por do sol" loading="lazy">
+            <span class="gallery-caption">Ofuro panoramico · vista 360° MG</span>
+          </div>
+          <div class="gallery-item">
+            <img src="/images/exterior-hexagonal.png" alt="Exterior hexagonal 3 andares, pedras naturais, jardim tropical, gado ao fundo" loading="lazy">
+            <span class="gallery-caption">Exterior hexagonal · 3 andares · pedra natural</span>
+          </div>
+          <div class="gallery-item">
+            <img src="/images/planta-aerea.png" alt="Planta aerea mostrando geometria hexagonal e 3 suites" loading="lazy">
+            <span class="gallery-caption">Vista aerea · geometria hexagonal modular</span>
+          </div>
+          <div class="gallery-item">
+            <img src="/images/interior-sala.png" alt="Sala de estar aberta com escritorio integrado, vigamento de concreto e paredes de vidro" loading="lazy">
+            <span class="gallery-caption">Sala de estar · sistema de som · home office</span>
+          </div>
+          <div class="gallery-video-wrap">
+            <video controls preload="metadata" poster="/images/exterior-hexagonal.png">
+              <source src="/images/walkthrough.mp4" type="video/mp4">
+            </video>
+            <span class="gallery-caption" style="padding: 6px; display: block;">Video walkthrough · casa hexagonal completa</span>
+          </div>
         </div>
 
         <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
