@@ -63,34 +63,77 @@ interface PriceSource {
 }
 
 /**
- * MOCK: Fetch prices from SINAPI (will be real API call)
+ * Fetch prices from SINAPI API (REAL INTEGRATION)
+ *
+ * Endpoints:
+ * - POST /busca - Full-text search
+ * - GET /preco?codigo=...&uf=... - Exact code lookup
+ *
+ * API URL: http://204.168.217.125:8008 (production VPS)
  */
 async function fetchSINAPIprices(itemName: string, region: string): Promise<PriceSource | null> {
-  // TODO: Replace with real SINAPI API call
-  // const response = await fetch(`https://api.sinapi.gov.br/v1/search?item=${itemName}&region=${region}`);
-  // const data = await response.json();
+  const SINAPI_API_URL = process.env.SINAPI_API_URL || 'http://204.168.217.125:8008';
 
-  // MOCK ONLY - Remove in production
-  const mockPrices: Record<string, PriceSource> = {
-    'Concreto fck 30 MPa': {
-      name: 'SINAPI (CAIXA)',
-      type: 'sinapi',
-      low: 450,
-      mid: 520,
-      high: 600,
-      confidence: 0.95,
-    },
-    'Bloco cerâmico 14cm': {
-      name: 'SINAPI (CAIXA)',
-      type: 'sinapi',
-      low: 1.2,
-      mid: 1.5,
-      high: 2.0,
-      confidence: 0.95,
-    },
-  };
+  try {
+    // Use full-text search endpoint
+    const response = await fetch(`${SINAPI_API_URL}/busca`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: itemName,
+        uf: region || 'BR', // Default to national prices
+        limit: 1, // We only need the best match
+      }),
+    });
 
-  return mockPrices[itemName] || null;
+    if (!response.ok) {
+      logger.warn('SINAPI API error', { status: response.status, item: itemName });
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.results || data.results.length === 0) {
+      logger.info('SINAPI: No results found', { item: itemName, region });
+      return null;
+    }
+
+    // Get the first (best) result
+    const result = data.results[0];
+
+    // Calculate confidence based on data age
+    const dataReferencia = new Date(result.data_referencia);
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - dataReferencia.getTime()) / (1000 * 60 * 60 * 24));
+
+    let confidence = 0.95; // Start high for SINAPI (official source)
+    if (daysDiff > 30) confidence = 0.85;
+    if (daysDiff > 90) confidence = 0.70;
+    if (daysDiff > 180) confidence = 0.55;
+
+    // SINAPI provides single price, we estimate low/high as ±15%
+    const midPrice = parseFloat(result.preco_atual);
+    const lowPrice = midPrice * 0.85;
+    const highPrice = midPrice * 1.15;
+
+    return {
+      name: `SINAPI (${result.tabela_origem})`,
+      type: 'sinapi',
+      low: lowPrice,
+      mid: midPrice,
+      high: highPrice,
+      url: `${SINAPI_API_URL}/preco?codigo=${result.codigo}&uf=${result.uf}`,
+      confidence,
+    };
+  } catch (error) {
+    logger.error('SINAPI API fetch failed', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      item: itemName,
+    });
+    return null;
+  }
 }
 
 /**
