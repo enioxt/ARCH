@@ -16,6 +16,13 @@ import {
   BudgetVersionList,
 } from '../schemas/budget.schema';
 import { logger } from '../telemetry/logger';
+import {
+  buildBudgetFromProject,
+  researchPrices,
+  recalculateBudget as recalculateBudgetAPI,
+  getLatestBudget,
+  lockBudget as lockBudgetAPI,
+} from '../lib/budget-client';
 
 interface BudgetState {
   // Current budget
@@ -49,79 +56,49 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
   budgetVersions: {},
 
   /**
-   * Create a new budget for a project
+   * Create a new budget for a project (calls backend API)
    */
   createBudget: async (projectId: string, projectName: string, region: string) => {
-    const budgetId = uuidv4();
-    const now = new Date().toISOString();
+    try {
+      // Call backend API to build budget from project
+      const newBudget = await buildBudgetFromProject(projectId, region, 'padrao');
 
-    // Initialize with empty scenarios and items
-    const newBudget: BudgetReport = {
-      id: budgetId,
-      projectId,
-      projectName,
-      version: '1.0.0',
-      region,
-      generatedAt: now,
-      updatedAt: now,
-      scenarios: [
-        {
-          scenario: 'economico',
-          description: 'Cenário com preços mínimos e materiais básicos',
-          subtotalMaterials: 0,
-          subtotalLabor: 0,
-          subtotalEquipment: 0,
-          subtotalLogistics: 0,
-          contingency: 0,
-          bdi: 0,
-          taxes: 0,
-          total: 0,
-        },
-        {
-          scenario: 'padrao',
-          description: 'Cenário com preços médios e padrão de mercado',
-          subtotalMaterials: 0,
-          subtotalLabor: 0,
-          subtotalEquipment: 0,
-          subtotalLogistics: 0,
-          contingency: 0,
-          bdi: 0,
-          taxes: 0,
-          total: 0,
-        },
-        {
-          scenario: 'premium',
-          description: 'Cenário com preços altos e materiais premium',
-          subtotalMaterials: 0,
-          subtotalLabor: 0,
-          subtotalEquipment: 0,
-          subtotalLogistics: 0,
-          contingency: 0,
-          bdi: 0,
-          taxes: 0,
-          total: 0,
-        },
-      ],
-      items: [],
-      methodology: ['Manual input (awaiting API integration)'],
-      alerts: [],
-      assumptions: {},
-      status: 'draft',
-    };
+      // Update local store
+      set((state) => ({
+        budgets: { ...state.budgets, [projectId]: newBudget },
+        budgetVersions: { ...state.budgetVersions, [projectId]: [newBudget] },
+      }));
 
-    set((state) => ({
-      budgets: { ...state.budgets, [projectId]: newBudget },
-      budgetVersions: { ...state.budgetVersions, [projectId]: [newBudget] },
-    }));
+      logger.log({
+        eventName: 'budget_created',
+        projectId,
+        budgetId: newBudget.id,
+        region,
+      });
 
-    logger.log({
-      eventName: 'budget_created',
-      projectId,
-      budgetId,
-      region,
-    });
+      // Trigger price research in background (don't await)
+      researchPrices(projectId, [], ['sinapi', 'retail'], region)
+        .then((result) => {
+          logger.log({
+            eventName: 'prices_researched_background',
+            projectId,
+            itemsUpdated: result.itemsUpdated,
+            cost: result.cost,
+          });
+          // TODO: Update budget with researched prices
+        })
+        .catch((err) => {
+          logger.error('Background price research failed', { error: err.message });
+        });
 
-    return newBudget;
+      return newBudget;
+    } catch (error) {
+      logger.error('Create budget failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        projectId,
+      });
+      throw error;
+    }
   },
 
   /**
@@ -400,28 +377,40 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
   /**
    * Lock a budget (finalize for approval)
    */
-  lockBudget: (projectId: string, lockedBy?: string) => {
-    set((state) => {
-      const budget = state.budgets[projectId];
-      if (!budget) return state;
+  lockBudget: async (projectId: string, lockedBy?: string) => {
+    try {
+      // Call backend API to lock budget
+      await lockBudgetAPI(projectId, lockedBy);
 
-      const lockedBudget = {
-        ...budget,
-        status: 'locked' as const,
-        lockedAt: new Date().toISOString(),
+      // Update local store
+      set((state) => {
+        const budget = state.budgets[projectId];
+        if (!budget) return state;
+
+        const lockedBudget = {
+          ...budget,
+          status: 'locked' as const,
+          lockedAt: new Date().toISOString(),
+          lockedBy,
+        };
+
+        return {
+          budgets: { ...state.budgets, [projectId]: lockedBudget },
+        };
+      });
+
+      logger.log({
+        eventName: 'budget_locked',
+        projectId,
         lockedBy,
-      };
-
-      return {
-        budgets: { ...state.budgets, [projectId]: lockedBudget },
-      };
-    });
-
-    logger.log({
-      eventName: 'budget_locked',
-      projectId,
-      lockedBy,
-    });
+      });
+    } catch (error) {
+      logger.error('Lock budget failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        projectId,
+      });
+      throw error;
+    }
   },
 
   /**

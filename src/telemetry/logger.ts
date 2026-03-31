@@ -15,7 +15,28 @@ export const TelemetryEventSchema = z.object({
     'video_generated',
     'version_saved',
     'export_created',
-    'user_feedback_submitted'
+    'user_feedback_submitted',
+    // Budget events
+    'budget_created',
+    'budget_build_api_call',
+    'budget_error',
+    'budget_research_started',
+    'budget_prices_researched',
+    'price_research_api_call',
+    'budget_recalculate_api_call',
+    'budget_locked',
+    'budget_saved',
+    'budget_report_generated',
+    'budget_source_fetched',
+    'prices_researched_background',
+    'budget_item_scenario_selected',
+    'budget_version_saved',
+    'budget_scenarios_recalculated',
+    'budget_item_removed',
+    'budget_item_updated',
+    'budget_item_added',
+    // Database events
+    'db_query',
   ]),
   projectId: z.string().uuid().optional(),
   modelUsed: z.string().optional(),
@@ -58,6 +79,19 @@ export class EGOSLogger {
 
   public getEvents() {
     return this.events;
+  }
+
+  // Convenience methods for different log levels
+  public info(message: string, metadata?: Record<string, any>) {
+    console.info('[EGOS INFO]', message, metadata || '');
+  }
+
+  public warn(message: string, metadata?: Record<string, any>) {
+    console.warn('[EGOS WARN]', message, metadata || '');
+  }
+
+  public error(message: string, metadata?: Record<string, any>) {
+    console.error('[EGOS ERROR]', message, metadata || '');
   }
 
   public subscribe(listener: (events: TelemetryEvent[]) => void) {
