@@ -6,15 +6,16 @@
 
 ### Local (.env file — NOT committed)
 
+**Currently stored:**
 ```
-BRAVE_API_KEY=BSAzJ4rPne1JDWZxGZT-yXoSWvVErzm
-EXA_API_KEY=***
-FIRECRAWL_API_KEY=***
-PERPLEXITY_API_KEY=***
-GEMINI_API_KEY=***
-OPENAI_API_KEY=***
-ANTHROPIC_API_KEY=***
-OPENROUTER_API_KEY=***
+BRAVE_API_KEY=BSAzJ4rPne1JDWZxGZT-yXoSWvVErzm ✅
+FIRECRAWL_API_KEY=fc-7574224eba4a416eafbfcc0150b185f4 ✅
+EXA_API_KEY=*** (placeholder)
+PERPLEXITY_API_KEY=*** (placeholder)
+GEMINI_API_KEY=*** (placeholder)
+OPENAI_API_KEY=*** (placeholder)
+ANTHROPIC_API_KEY=*** (placeholder)
+OPENROUTER_API_KEY=*** (placeholder)
 ```
 
 All keys are stored in `.env` file which is:
@@ -69,15 +70,40 @@ const results = await exa.search(itemName, { numResults: 5 });
 
 ### Firecrawl API
 
-**Location:** `src/lib/budget-api.ts:researchPrices()`
+**Location:** `src/lib/budget-api.ts:fetchRetailPrices()`
+
+**Key Format:** `fc-` followed by alphanumeric string
 
 ```typescript
-// ✅ CORRECT
+// ✅ CORRECT: Load from process.env
 const firecrawlKey = process.env.FIRECRAWL_API_KEY;
-const firecrawl = new Firecrawl(firecrawlKey);
 
-const data = await firecrawl.scrape({ url });
+if (!firecrawlKey) {
+  throw new Error('FIRECRAWL_API_KEY not set in environment');
+}
+
+// POST request to https://api.firecrawl.dev/v0/scrape
+const response = await fetch('https://api.firecrawl.dev/v0/scrape', {
+  method: 'POST',
+  headers: {
+    'Authorization': `Bearer ${firecrawlKey}`,
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    url: targetUrl,
+    formats: ['markdown', 'html'],
+    onlyMainContent: true,
+  }),
+});
+
+const data = await response.json();
+const markdown = data.markdown; // Contains scraped content
+
+// ❌ WRONG: Never hardcode keys
+const firecrawlKey = 'fc-7574224eba4a416eafbfcc0150b185f4';
 ```
+
+**Important:** Firecrawl uses `Bearer` token authentication (not API key header), unlike Brave which uses `X-Subscription-Token`.
 
 ### Perplexity API
 
@@ -175,14 +201,14 @@ logger.log({
 
 ## 🔄 Key Rotation Schedule
 
-| API | Frequency | Last Rotated | Next Due |
-|-----|-----------|--------------|----------|
-| Brave | Q1 2026 | TBD | - |
-| Exa | Q1 2026 | TBD | - |
-| Firecrawl | Q1 2026 | TBD | - |
-| Perplexity | Q1 2026 | TBD | - |
-| Gemini | Q1 2026 | TBD | - |
-| OpenAI | Q1 2026 | TBD | - |
+| API | Frequency | Added | Last Rotated | Next Due |
+|-----|-----------|-------|--------------|----------|
+| Brave | Quarterly | 2026-03-31 | 2026-03-31 | 2026-06-30 |
+| Firecrawl | Quarterly | 2026-03-31 | 2026-03-31 | 2026-06-30 |
+| Exa | Quarterly | - | - | - |
+| Perplexity | Quarterly | - | - | - |
+| Gemini | Quarterly | - | - | - |
+| OpenAI | Quarterly | - | - | - |
 
 ## 🚨 Emergency Response
 
