@@ -1,0 +1,536 @@
+# .windsurfrules — EGOS ARCH
+
+> **PURPOSE:** Local governance rules for AI-assisted development in the Arch repo
+> **VERSION:** 1.0.0 | **CREATED:** 2026-03-31
+> **SCOPE:** Coding standards, architecture constraints, AI agent behavior
+
+---
+
+## 🎯 Project Identity
+
+- **Repo:** `arch`
+- **Type:** AI-assisted architectural design tool (MVP → Production)
+- **Stack:** React 19, TypeScript, Vite 6, Express, Tailwind CSS 4, Zustand
+- **Classification:** Product (EGOS Ecosystem)
+- **Owner:** Enio Rocha
+
+---
+
+## 📜 Core Principles
+
+### 1. Transparency Radical
+- Every AI decision, API call, and cost must be traceable
+- Telemetry is not optional — it's architecture
+- Users see costs in real-time
+
+### 2. Motor Paramétrico > Geração Mágica
+- Priorize **projeto editável** sobre imagens bonitas
+- Histórico e diff > geração do zero toda vez
+- JSON canônico como fonte da verdade
+
+### 3. Fontes de Verdade
+- Preços: SINAPI/CUB/ORSE first, mercado second, IA never inventa
+- Geometria: Vision extraction → validação humana
+- Orçamento: sempre 3 cenários com fontes auditáveis
+
+### 4. Simplicidade Operacional
+- Evite sobre-engenharia
+- MVP funcional > feature completa mas quebrada
+- Deployable > perfeito
+
+---
+
+## 🛠️ Coding Standards
+
+### TypeScript
+```typescript
+// ✅ GOOD: Explicit types, structured, readable
+type BudgetItem = {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  prices: {
+    low: number;
+    mid: number;
+    high: number;
+  };
+  sources: CostSource[];
+  confidenceScore: number;
+};
+
+// ❌ BAD: any, implicit types, unclear structure
+const item: any = { ... };
+```
+
+### React Components
+- Functional components only
+- Hooks for state and effects
+- Props interfaces always explicit
+- No inline styles (use Tailwind)
+
+```tsx
+// ✅ GOOD
+type ProposalCardProps = {
+  proposal: DesignProposal;
+  onSelect: (id: string) => void;
+  isSelected: boolean;
+};
+
+export function ProposalCard({ proposal, onSelect, isSelected }: ProposalCardProps) {
+  return (
+    <Card className={cn("p-4", isSelected && "ring-2 ring-blue-500")}>
+      {/* ... */}
+    </Card>
+  );
+}
+
+// ❌ BAD
+export function ProposalCard(props: any) {
+  return <div style={{ padding: "16px" }}>{/* ... */}</div>;
+}
+```
+
+### API Routes
+- RESTful conventions
+- Versioned endpoints (`/api/v1/*`)
+- Structured error responses
+- Cost tracking on every LLM call
+
+```typescript
+// ✅ GOOD
+app.post("/api/budget/build-from-project", async (req, res) => {
+  const startTime = Date.now();
+  try {
+    const { projectId } = req.body;
+
+    const budget = await budgetResearcher.buildBudget(projectId);
+
+    telemetry.emit({
+      event_type: "budget_generated",
+      latency_ms: Date.now() - startTime,
+      cost_usd: budget.apiCost,
+      metadata: { projectId, item_count: budget.items.length }
+    });
+
+    res.json({ success: true, data: budget });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// ❌ BAD
+app.post("/budget", (req, res) => {
+  const budget = makeBudget(req.body); // no error handling, no telemetry
+  res.send(budget);
+});
+```
+
+### State Management (Zustand)
+- One store per domain
+- Selectors for derived state
+- Actions as methods, not external functions
+
+```typescript
+// ✅ GOOD
+export const useBudgetStore = create<BudgetStore>((set, get) => ({
+  budgets: {},
+
+  addBudget: (projectId: string, budget: BudgetReport) => {
+    set(state => ({
+      budgets: { ...state.budgets, [projectId]: budget }
+    }));
+  },
+
+  getLatestBudget: (projectId: string) => {
+    return get().budgets[projectId];
+  }
+}));
+
+// ❌ BAD: Global state outside store
+let globalBudget: any;
+```
+
+---
+
+## 🏗️ Architecture Constraints
+
+### File Organization
+```
+src/
+├── components/        # React UI components
+│   ├── layout/
+│   ├── briefing/
+│   ├── budget/
+│   └── shared/
+├── store/            # Zustand stores
+├── schemas/          # TypeScript types/schemas
+├── ai/               # AI agents and prompts
+│   ├── agents/
+│   ├── prompts/
+│   ├── orchestrator/
+│   └── providers/
+├── lib/              # Utilities and helpers
+├── telemetry/        # Telemetry instrumentation
+└── App.tsx
+```
+
+### Naming Conventions
+- **Components:** PascalCase (`BudgetSummary.tsx`)
+- **Hooks:** camelCase with `use` prefix (`useBudgetStore.ts`)
+- **Utilities:** camelCase (`formatCurrency.ts`)
+- **Constants:** SCREAMING_SNAKE_CASE (`API_BASE_URL`)
+- **Types/Interfaces:** PascalCase (`BudgetReport`, `CostSource`)
+
+### Import Order
+1. React and external libraries
+2. Internal components
+3. Stores and state
+4. Utilities and helpers
+5. Types and schemas
+6. Styles
+
+```typescript
+// ✅ GOOD
+import { useState, useEffect } from "react";
+import { Card, Button } from "@/components/shared";
+import { useBudgetStore } from "@/store/budgetStore";
+import { formatCurrency } from "@/lib/utils";
+import type { BudgetReport } from "@/schemas/budget";
+import "./styles.css";
+```
+
+---
+
+## 🤖 AI Agent Rules
+
+### When to Use AI
+- ✅ Briefing interpretation
+- ✅ Design rationale generation
+- ✅ Price research and normalization
+- ✅ Vision extraction from sketches
+- ✅ Meta-prompt generation
+- ✅ Natural language → structured data
+
+### When NOT to Use AI
+- ❌ Calculating totals (use math)
+- ❌ Validating JSON structure (use schema validators)
+- ❌ Formatting dates (use libraries)
+- ❌ Simple CRUD operations
+- ❌ Unit conversions
+
+### LLM Provider Selection
+1. **Gemini 3.1 Pro:** Multimodal (images, video), tool use, cost-effective
+2. **Claude Sonnet 4.6:** Complex reasoning, long context
+3. **GPT-5.4:** Fallback for specific tasks, coding copilot
+
+**Rule:** Always implement fallback chain. If primary fails, try secondary. Log all provider switches.
+
+### Prompt Engineering
+- **System prompts** in dedicated files (`src/ai/prompts/`)
+- **User prompts** constructed programmatically
+- **Few-shot examples** for structured outputs
+- **Chain-of-thought** for complex reasoning
+
+```typescript
+// ✅ GOOD: Structured prompt with role clarity
+const prompt = `
+You are a professional architect analyzing a client briefing.
+
+INPUT:
+${briefing}
+
+TASK:
+1. Extract key requirements
+2. Identify constraints (budget, terrain, regulations)
+3. Suggest 3 distinct design approaches
+4. Provide rationale for each
+
+OUTPUT FORMAT (JSON):
+{
+  "rationale": "...",
+  "proposals": [
+    { "title": "...", "description": "...", "pros": [...], "cons": [...] }
+  ]
+}
+`;
+
+// ❌ BAD: Vague, unstructured
+const prompt = "Make me some house designs based on this: " + briefing;
+```
+
+---
+
+## 💰 Cost Management
+
+### Budgets
+- **Daily cap:** $10 USD (soft limit)
+- **Per-user session cap:** $2 USD
+- **Render/video generation:** $0.50 per request max
+- **Budget research:** $0.10 per item (target)
+
+### Cost Tracking
+Every AI/API call must log:
+- Provider
+- Model
+- Tokens (input/output)
+- Cost (USD)
+- Latency
+- Success/failure
+
+### Optimization Rules
+1. Cache LLM responses where possible (keyed by prompt hash)
+2. Use cheaper models for simple tasks (Flash > Pro, Haiku > Sonnet)
+3. Batch requests when API supports it
+4. Set max_tokens limits to prevent runaway costs
+
+---
+
+## 🧪 Testing Strategy
+
+### Unit Tests
+- Critical business logic
+- Utility functions
+- Schema validators
+- Target: >70% coverage
+
+### Integration Tests
+- API endpoints
+- AI agent workflows
+- Multi-provider fallback
+
+### E2E Tests (Planned)
+- User flows (Playwright)
+- Briefing → Proposals
+- Project → Budget
+- Upload → Render
+
+---
+
+## 📦 Dependencies
+
+### Core
+- `react@19` + `react-dom@19`
+- `typescript@5.7`
+- `vite@6`
+- `express@4.21`
+- `zustand@4`
+
+### AI/ML
+- `@google/generative-ai` (Gemini)
+- `@anthropic-ai/sdk` (Claude)
+- `openai` (GPT)
+- `@fal-ai/client` (Renders/video)
+
+### Planned
+- `exa-js` (Search)
+- `firecrawl` (Scraping)
+- `@perplexity/sdk` (Deep research)
+
+### Styling
+- `tailwindcss@4`
+- `@tailwindcss/typography`
+- `lucide-react` (icons)
+
+### Utilities
+- `zod` (schema validation)
+- `date-fns` (date formatting)
+- `clsx` + `tailwind-merge` (className utils)
+
+**Rule:** No new dependencies without justification. Prefer native solutions when possible.
+
+---
+
+## 🔒 Security Rules
+
+### API Keys
+- ✅ Stored in `.env` (never committed)
+- ✅ Accessed via `process.env.XYZ_API_KEY`
+- ✅ Rotated quarterly
+- ❌ Never logged in plaintext
+- ❌ Never sent to client
+
+### User Data
+- Minimal data collection
+- No PII in telemetry by default
+- Project data anonymized in logs
+- Clear data retention policy (planned)
+
+### Input Validation
+- All user inputs validated with Zod schemas
+- SQL injection not applicable (no SQL yet)
+- XSS prevented by React escaping
+- CORS configured for known origins only
+
+---
+
+## 📊 Telemetry Requirements
+
+### Required Events
+Every feature must emit:
+- `feature_used` (what was used)
+- `feature_completed` or `feature_failed`
+- `feature_cost` (if involves external APIs)
+- `feature_latency`
+
+### Event Schema
+```typescript
+{
+  timestamp: string;       // ISO 8601
+  event_type: string;
+  agent?: string;
+  project_id?: string;
+  session_id: string;
+  latency_ms: number;
+  cost_usd: number;
+  provider?: string;
+  metadata: Record<string, any>;
+}
+```
+
+---
+
+## 🚫 Anti-Patterns to Avoid
+
+### Code
+- ❌ God components (>500 lines)
+- ❌ Prop drilling (use Zustand)
+- ❌ Mutable state
+- ❌ any types
+- ❌ Commented-out code (delete it)
+- ❌ Console.log in production (use proper logging)
+
+### Architecture
+- ❌ Business logic in components
+- ❌ Direct API calls from UI (use API layer)
+- ❌ Hardcoded URLs/keys
+- ❌ Mixing concerns (AI logic in UI code)
+
+### AI Usage
+- ❌ Using LLM to calculate simple math
+- ❌ No error handling on AI calls
+- ❌ No cost tracking
+- ❌ Trusting AI output without validation
+
+---
+
+## 📝 Commit Message Format
+
+```
+<type>(<scope>): <subject>
+
+<body>
+
+<footer>
+```
+
+**Types:**
+- `feat`: New feature
+- `fix`: Bug fix
+- `refactor`: Code restructure (no behavior change)
+- `docs`: Documentation only
+- `test`: Tests added/modified
+- `chore`: Build/tooling changes
+
+**Examples:**
+```
+feat(budget): implement 3-scenario calculation engine
+
+- Add economico/padrao/premium scenarios
+- Integrate SINAPI baseline pricing
+- Emit telemetry events for all calculations
+
+Closes ARCH-001
+```
+
+```
+fix(render): handle fal.ai queue timeout gracefully
+
+Previously crashed on timeout. Now retries up to 3 times
+with exponential backoff.
+```
+
+---
+
+## 🔄 Git Workflow
+
+1. **Main branch:** `main` (always deployable)
+2. **Feature branches:** `feat/arch-001-budget-module`
+3. **Fix branches:** `fix/render-timeout`
+4. **PR required** for merge to main (planned)
+5. **Auto-deploy on merge** (planned)
+
+### Branch Lifecycle
+```
+main
+  ├── feat/arch-001-budget-module
+  │    └── (work, test, commit)
+  │    └── PR → review → merge → deploy
+  └── fix/render-timeout
+       └── (hotfix) → PR → merge → deploy
+```
+
+---
+
+## 📚 Documentation Requirements
+
+### Code Comments
+- **Public APIs:** JSDoc comments
+- **Complex logic:** Inline explanations
+- **Workarounds:** Comment with context
+- **TODOs:** Link to task in TASKS.md
+
+```typescript
+/**
+ * Calculates budget scenarios (low/mid/high) for a project.
+ *
+ * @param projectId - Unique project identifier
+ * @param region - Brazilian state code (e.g., "MG", "SP")
+ * @returns Budget report with 3 scenarios and itemized breakdown
+ * @throws {ValidationError} if projectId invalid
+ * @throws {ApiError} if external API fails
+ *
+ * @see TASKS.md#ARCH-001
+ */
+async function calculateBudget(projectId: string, region: string): Promise<BudgetReport> {
+  // Implementation
+}
+```
+
+### README Updates
+- Update on every major feature
+- Keep "Getting Started" current
+- Document environment variables
+- List all API integrations
+
+---
+
+## 🎓 Learning Resources
+
+- **React 19:** https://react.dev
+- **TypeScript:** https://www.typescriptlang.org/docs
+- **Tailwind CSS 4:** https://tailwindcss.com
+- **Zustand:** https://zustand.docs.pmnd.rs
+- **EGOS Principles:** `/home/enio/egos/docs/`
+
+---
+
+## 🔗 Related Documents
+
+- `AGENTS.md` — System map
+- `TASKS.md` — Backlog and roadmap
+- `docs/CAPABILITY_REGISTRY.md` — Agent capabilities
+- `docs/SYSTEM_MAP.md` — Architecture diagrams
+- `.guarani/PREFERENCES.md` — General EGOS preferences
+- `.guarani/IDENTITY.md` — Repo identity in ecosystem
+
+---
+
+**Enforcement:** AI assistants (Windsurf, Claude Code, Cursor) should follow these rules automatically.
+**Updates:** Review and update monthly or on major architecture changes.
+**Owner:** Enio Rocha
+**Last updated:** 2026-03-31
