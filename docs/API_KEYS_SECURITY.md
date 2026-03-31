@@ -1,0 +1,223 @@
+# API Keys & Security Guide
+
+> **IMPORTANT:** Never commit `.env` to git. It's already in `.gitignore`.
+
+## 🔐 Stored API Keys
+
+### Local (.env file — NOT committed)
+
+```
+BRAVE_API_KEY=BSAzJ4rPne1JDWZxGZT-yXoSWvVErzm
+EXA_API_KEY=***
+FIRECRAWL_API_KEY=***
+PERPLEXITY_API_KEY=***
+GEMINI_API_KEY=***
+OPENAI_API_KEY=***
+ANTHROPIC_API_KEY=***
+OPENROUTER_API_KEY=***
+```
+
+All keys are stored in `.env` file which is:
+- ✅ In `.gitignore` (not committed)
+- ✅ Loaded by `dotenv` at runtime
+- ✅ Accessible via `process.env.KEY_NAME`
+
+### Production (Environment Variables)
+
+For production deployment, set these as environment variables in your hosting:
+- Vercel: Settings → Environment Variables
+- Railway: Settings → Variables
+- Heroku: Config Vars
+- Docker: `--env-file` or docker-compose secrets
+
+## 🚀 Using API Keys in Code
+
+### Brave Search API
+
+**Location:** `src/lib/budget-api.ts:fetchRetailPrices()`
+
+```typescript
+// ✅ CORRECT: Load from process.env
+const braveKey = process.env.BRAVE_API_KEY;
+
+if (!braveKey) {
+  throw new Error('BRAVE_API_KEY not set in environment');
+}
+
+const response = await fetch('https://api.search.brave.com/res/v1/web/search', {
+  headers: {
+    'Accept': 'application/json',
+    'X-Subscription-Token': braveKey,
+  },
+});
+
+// ❌ WRONG: Never hardcode keys
+const braveKey = 'BSAzJ4rPne1JDWZxGZT-yXoSWvVErzm';
+```
+
+### Exa API
+
+**Location:** `src/lib/budget-api.ts:researchPrices()`
+
+```typescript
+// ✅ CORRECT
+const exaKey = process.env.EXA_API_KEY;
+const exa = new Exa(exaKey);
+
+const results = await exa.search(itemName, { numResults: 5 });
+```
+
+### Firecrawl API
+
+**Location:** `src/lib/budget-api.ts:researchPrices()`
+
+```typescript
+// ✅ CORRECT
+const firecrawlKey = process.env.FIRECRAWL_API_KEY;
+const firecrawl = new Firecrawl(firecrawlKey);
+
+const data = await firecrawl.scrape({ url });
+```
+
+### Perplexity API
+
+**Location:** `src/lib/budget-api.ts:deepResearchPrices()` (planned)
+
+```typescript
+// ✅ CORRECT
+const perpKey = process.env.PERPLEXITY_API_KEY;
+const perp = new Perplexity(perpKey);
+
+const response = await perp.chat.completions.create({
+  model: 'sonar-pro',
+  messages: [...],
+});
+```
+
+## 🛡️ Security Best Practices
+
+### ✅ DO
+
+1. **Store keys in `.env`** (not in code)
+2. **Load via `process.env`** at runtime
+3. **Check key existence** before using
+4. **Rotate keys quarterly** (security best practice)
+5. **Use separate keys per environment** (dev, staging, prod)
+6. **Log API usage** for audit trails
+7. **Set rate limits** on API keys
+
+### ❌ DON'T
+
+1. **Never hardcode keys** in source code
+2. **Never commit `.env`** to git
+3. **Never log API keys** or responses
+4. **Never share keys** in Slack, email, etc
+5. **Never use production keys in development**
+6. **Never expose keys in error messages**
+7. **Never publish keys in documentation**
+
+## 📝 Setup Instructions
+
+### For Development
+
+1. Copy `.env.example` to `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Fill in your API keys:
+   ```bash
+   nano .env
+   # or: vim .env
+   # or: code .env
+   ```
+
+3. Verify `.env` is in `.gitignore`:
+   ```bash
+   cat .gitignore | grep -i env
+   # Should output: .env*
+   ```
+
+4. Test that keys are loaded:
+   ```bash
+   node -e "require('dotenv').config(); console.log(process.env.BRAVE_API_KEY)"
+   # Should output: BSAzJ4rPne1JDWZxGZT-yXoSWvVErzm
+   ```
+
+### For Production
+
+1. Set environment variables in your hosting platform
+2. Never commit `.env` — always use platform's secret manager
+3. Rotate keys every 90 days
+4. Monitor API usage for unusual patterns
+
+## 📊 API Cost Tracking
+
+Each API call should log:
+- API name (Brave, Exa, Firecrawl, etc)
+- Request timestamp
+- Item queried
+- Cost in USD
+- Response time
+- Success/failure
+
+```typescript
+// ✅ EXAMPLE: Log API usage
+logger.log({
+  eventName: 'budget_source_fetched',
+  provider: 'brave',
+  itemName: 'Concreto fck 30 MPa',
+  costUsd: 0.005, // Brave charges ~$5/1000 requests
+  latencyMs: 234,
+  status: 'success',
+});
+```
+
+## 🔄 Key Rotation Schedule
+
+| API | Frequency | Last Rotated | Next Due |
+|-----|-----------|--------------|----------|
+| Brave | Q1 2026 | TBD | - |
+| Exa | Q1 2026 | TBD | - |
+| Firecrawl | Q1 2026 | TBD | - |
+| Perplexity | Q1 2026 | TBD | - |
+| Gemini | Q1 2026 | TBD | - |
+| OpenAI | Q1 2026 | TBD | - |
+
+## 🚨 Emergency Response
+
+If a key is accidentally committed:
+
+1. **Immediately rotate the key** (disable old one)
+2. Run the following commands:
+   ```bash
+   # Remove from git history
+   git filter-branch --tree-filter 'rm -f .env' HEAD
+
+   # Force push (dangerous, coordinate with team)
+   git push origin --force-with-lease
+   ```
+3. Add the key to `.gitignore` if not already there
+4. Log the incident in security records
+
+## 📚 References
+
+- **Budget Module:** `src/lib/budget-api.ts`
+- **Environment Setup:** `.env.example`
+- **API Endpoints:** `docs/SYSTEM_MAP.md` → Flow 4
+- **Implementation Guide:** `BUDGET_IMPLEMENTATION_GUIDE.md`
+
+## 🤝 Questions?
+
+If you need to add a new API key:
+1. Add to `.env.example` with placeholder
+2. Add to `.env` with actual value
+3. Load via `process.env.KEY_NAME` in code
+4. Document usage in this file
+5. Update API_COST_TRACKING.md
+
+---
+
+**Last Updated:** 2026-03-31
+**Reviewed By:** Enio Rocha
+**Status:** ✅ Complete

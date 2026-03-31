@@ -7,6 +7,7 @@ import OpenAI from 'openai';
 import { ARCHITECT_SYSTEM_PROMPT } from './src/ai/prompts/architect-agent.js';
 import { generate, getAvailableModels, estimateFullProjectCost, MODEL_CONFIGS } from './src/lib/generation-engine.js';
 import { generateProjectPrompts, getRequiredDeliverables, calculateTotalCost } from './src/lib/prompt-generator.js';
+import { registerBudgetRoutes } from './src/lib/budget-api.js';
 
 dotenv.config();
 
@@ -315,6 +316,9 @@ app.post('/api/vision/extract-geometry', async (req, res) => {
     });
   }, 1500);
 });
+
+// --- Budget Module Routes ---
+registerBudgetRoutes(app);
 
 async function startServer() {
   // Vite middleware for development

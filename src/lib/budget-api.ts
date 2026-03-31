@@ -94,13 +94,34 @@ async function fetchSINAPIprices(itemName: string, region: string): Promise<Pric
 }
 
 /**
- * MOCK: Fetch prices from market (Leroy Merlin, Telhanorte, etc)
- * Will be replaced by Exa API + Firecrawl
+ * Fetch prices from Brave Search API + Firecrawl
+ *
+ * TODO: Replace with real integration
+ * 1. Search via Brave API: https://api.search.brave.com/res/v1/web/search
+ * 2. Extract prices via Firecrawl: https://api.firecrawl.dev/v0/scrape
+ *
+ * API Key: process.env.BRAVE_API_KEY (already in .env)
  */
 async function fetchRetailPrices(itemName: string, region: string): Promise<PriceSource | null> {
-  // TODO: Replace with real Exa + Firecrawl integration
-  // const exaResults = await exaClient.search(itemName, { numResults: 5 });
-  // const prices = await Promise.all(exaResults.map(url => firecrawl.extract(url)));
+  // TODO: Implement Brave Search integration
+  // const braveKey = process.env.BRAVE_API_KEY;
+  // const response = await fetch('https://api.search.brave.com/res/v1/web/search', {
+  //   headers: {
+  //     'Accept': 'application/json',
+  //     'X-Subscription-Token': braveKey,
+  //   },
+  //   method: 'GET',
+  // });
+  //
+  // TODO: Then use Firecrawl to scrape prices from URLs
+  // const firecrawlKey = process.env.FIRECRAWL_API_KEY;
+  // const urls = searchResults.map(r => r.url);
+  // const prices = await Promise.all(
+  //   urls.map(url => firecrawl.scrape({
+  //     url,
+  //     extractPrices: true,
+  //   }))
+  // );
 
   // MOCK ONLY - Remove in production
   const mockPrices: Record<string, PriceSource> = {

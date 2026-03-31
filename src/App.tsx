@@ -27,10 +27,11 @@ import VideoView from './components/views/VideoView';
 import ObservabilidadeView from './components/views/ObservabilidadeView';
 import WorkflowView from './components/views/WorkflowView';
 import ExportView from './components/views/ExportView';
+import BudgetView from './components/budget/BudgetView';
 import ProjectPipeline from './components/ProjectPipeline';
 import { useProjectStore } from './store/project.store';
 
-type ViewType = 'briefing' | 'croqui' | 'planta' | 'massa3d' | 'renders' | 'video' | 'pipeline' | 'workflow' | 'observabilidade' | 'export';
+type ViewType = 'briefing' | 'croqui' | 'planta' | 'massa3d' | 'renders' | 'video' | 'pipeline' | 'workflow' | 'observabilidade' | 'orçamento' | 'export';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewType>('briefing');
@@ -52,6 +53,7 @@ export default function App() {
     { id: 'renders', label: 'Renders', icon: Camera },
     { id: 'video', label: 'Vídeo', icon: Video },
     { id: 'observabilidade', label: 'Telemetria EGOS', icon: Activity },
+    { id: 'orçamento', label: 'Orçamento', icon: DollarSign },
   ];
 
   return (
@@ -166,6 +168,7 @@ export default function App() {
             {currentView === 'renders' && <RendersView />}
             {currentView === 'video' && <VideoView />}
             {currentView === 'observabilidade' && <ObservabilidadeView />}
+            {currentView === 'orçamento' && <BudgetView />}
             {currentView === 'export' && <ExportView />}
           </div>
         </div>

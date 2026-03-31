@@ -2,6 +2,9 @@
 
 # EGOS Arch
 
+> **Status:** ⏸️ Em pausa — parceiro contatado, aguardando resposta. Generation engine + 12 AI models prontos.  
+> Este projeto tem MVP funcional disponível. Interessados em contribuir ou co-fundar: entre em contato via [Issues](https://github.com/enioxt/arch/issues) ou enio@egos.ia.br
+
 ### Arquitetura Assistida por Inteligência Artificial
 
 **Transforme sketches e briefings em projetos arquitetônicos completos**
