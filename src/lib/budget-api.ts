@@ -96,32 +96,71 @@ async function fetchSINAPIprices(itemName: string, region: string): Promise<Pric
 /**
  * Fetch prices from Brave Search API + Firecrawl
  *
- * TODO: Replace with real integration
+ * Workflow:
  * 1. Search via Brave API: https://api.search.brave.com/res/v1/web/search
  * 2. Extract prices via Firecrawl: https://api.firecrawl.dev/v0/scrape
  *
- * API Key: process.env.BRAVE_API_KEY (already in .env)
+ * API Keys:
+ * - process.env.BRAVE_API_KEY (X-Subscription-Token header)
+ * - process.env.FIRECRAWL_API_KEY (Authorization Bearer token)
  */
 async function fetchRetailPrices(itemName: string, region: string): Promise<PriceSource | null> {
-  // TODO: Implement Brave Search integration
+  // STEP 1: Search with Brave API
   // const braveKey = process.env.BRAVE_API_KEY;
-  // const response = await fetch('https://api.search.brave.com/res/v1/web/search', {
+  // if (!braveKey) throw new Error('BRAVE_API_KEY not set');
+  //
+  // const searchResponse = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(itemName)} preço ${region}`, {
   //   headers: {
   //     'Accept': 'application/json',
   //     'X-Subscription-Token': braveKey,
   //   },
-  //   method: 'GET',
   // });
+  // const searchResults = await searchResponse.json();
+  // const urls = searchResults.results?.slice(0, 5).map((r: any) => r.url) || [];
   //
-  // TODO: Then use Firecrawl to scrape prices from URLs
+  // STEP 2: Scrape prices with Firecrawl
   // const firecrawlKey = process.env.FIRECRAWL_API_KEY;
-  // const urls = searchResults.map(r => r.url);
-  // const prices = await Promise.all(
-  //   urls.map(url => firecrawl.scrape({
-  //     url,
-  //     extractPrices: true,
-  //   }))
+  // if (!firecrawlKey) throw new Error('FIRECRAWL_API_KEY not set');
+  //
+  // const scrapedData = await Promise.all(
+  //   urls.map(url =>
+  //     fetch('https://api.firecrawl.dev/v0/scrape', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Authorization': `Bearer ${firecrawlKey}`,
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify({
+  //         url,
+  //         formats: ['markdown', 'html'],
+  //         onlyMainContent: true,
+  //       }),
+  //     }).then(r => r.json())
+  //   )
   // );
+  //
+  // STEP 3: Parse prices from Firecrawl markdown output
+  // const prices = scrapedData
+  //   .map(data => {
+  //     const text = data.markdown || '';
+  //     // Use regex to extract price patterns (R$ XX,XX or similar)
+  //     const priceMatches = text.match(/R\$\s*[\d.,]+/g) || [];
+  //     return priceMatches.map(p => parseFloat(p.replace('R$', '').replace('.', '').replace(',', '.')));
+  //   })
+  //   .flat()
+  //   .filter(p => p > 0);
+  //
+  // STEP 4: Aggregate and return
+  // if (prices.length === 0) return null;
+  // return {
+  //   name: `Market Average (${region})`,
+  //   type: 'retail',
+  //   low: Math.min(...prices),
+  //   mid: prices[Math.floor(prices.length / 2)],
+  //   high: Math.max(...prices),
+  //   url: urls[0],
+  //   confidence: 0.75,
+  // };
 
   // MOCK ONLY - Remove in production
   const mockPrices: Record<string, PriceSource> = {
