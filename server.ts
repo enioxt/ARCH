@@ -5,8 +5,16 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 import { ARCHITECT_SYSTEM_PROMPT } from './src/ai/prompts/architect-agent.js';
+import { generate, getAvailableModels, estimateFullProjectCost, MODEL_CONFIGS } from './src/lib/generation-engine.js';
 
 dotenv.config();
+
+// API keys for generation providers
+const apiKeys = {
+  fal: process.env.FAL_KEY || '',
+  together: process.env.TOGETHER_API_KEY || '',
+  google: process.env.GOOGLE_AI_API_KEY || '',
+};
 
 const app = express();
 const PORT = 3000;
@@ -26,6 +34,9 @@ const openai = new OpenAI({
 
 // --- Static files & presentation page ---
 app.use('/public', express.static(path.join(process.cwd(), 'public')));
+app.use('/images', express.static(path.join(process.cwd(), 'public', 'images')));
+// Serve generated outputs (renders, videos)
+app.use('/generated', express.static(path.join(process.cwd(), 'generated')));
 
 app.get('/apresentacao', (req, res) => {
   res.sendFile(path.join(process.cwd(), 'public', 'apresentacao.html'));
@@ -133,6 +144,105 @@ app.post('/api/analyze-briefing', async (req, res) => {
   } catch (error) {
     console.error('Error analyzing briefing:', error);
     res.status(500).json({ error: 'Failed to analyze briefing' });
+  }
+});
+
+// --- Generation API (images + videos) ---
+
+// List available models + which have API keys configured
+app.get('/api/models', (req, res) => {
+  const models = getAvailableModels(apiKeys);
+  res.json(models);
+});
+
+// Cost estimator
+app.get('/api/cost-estimate/:tier', (req, res) => {
+  const tier = req.params.tier as 'economy' | 'standard' | 'premium';
+  if (!['economy', 'standard', 'premium'].includes(tier)) {
+    return res.status(400).json({ error: 'Tier must be economy, standard, or premium' });
+  }
+  res.json(estimateFullProjectCost(tier));
+});
+
+// Generate image or video
+app.post('/api/generate', async (req, res) => {
+  try {
+    const { prompt, modelId, negativePrompt, width, height, durationSeconds, referenceImage } = req.body;
+
+    if (!prompt || !modelId) {
+      return res.status(400).json({ error: 'prompt and modelId are required' });
+    }
+
+    const config = MODEL_CONFIGS[modelId];
+    if (!config) {
+      return res.status(400).json({
+        error: `Unknown model: ${modelId}`,
+        available: Object.keys(MODEL_CONFIGS),
+      });
+    }
+
+    console.log(`[ARCH] Generating ${config.type} with ${config.name} (${config.provider})...`);
+
+    const result = await generate(
+      { prompt, modelId, negativePrompt, width, height, durationSeconds, referenceImage },
+      apiKeys
+    );
+
+    console.log(`[ARCH] ✅ ${config.name}: ${result.durationMs}ms, $${result.costUsd.toFixed(4)} USD`);
+
+    res.json({
+      success: true,
+      result,
+    });
+  } catch (error: any) {
+    console.error('[ARCH] Generation error:', error.message);
+    res.status(500).json({
+      error: error.message || 'Generation failed',
+      provider: req.body.modelId ? MODEL_CONFIGS[req.body.modelId]?.provider : 'unknown',
+    });
+  }
+});
+
+// --- AI Co-Pilot: Project suggestions ---
+app.post('/api/copilot/suggest', async (req, res) => {
+  try {
+    const { projectState, userRequest } = req.body;
+
+    const prompt = `Voce e um arquiteto IA co-piloto do sistema EGOS Arch.
+
+O usuario tem um projeto de arquitetura com este estado atual:
+${JSON.stringify(projectState, null, 2)}
+
+O usuario pede: "${userRequest}"
+
+Responda com sugestoes PRATICAS em JSON:
+{
+  "sugestoes": [
+    {
+      "tipo": "modificacao" | "adicao" | "remocao" | "alerta",
+      "area": "qual parte do projeto",
+      "descricao": "o que mudar",
+      "impacto_custo": "estimativa de impacto no orcamento",
+      "prompt_render": "prompt otimizado para gerar um render dessa sugestao"
+    }
+  ],
+  "resumo": "resumo em 1 frase do que foi sugerido"
+}
+
+Exemplos de pedidos: "trocar de 2 quartos pra 3", "aumentar banheiro", "mudar formato para circular", "sugerir materiais sustentaveis"
+Seja pratico e especifico. Inclua sempre um prompt_render para cada sugestao.`;
+
+    const completion = await openai.chat.completions.create({
+      model: "google/gemini-2.0-flash-001",
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+    });
+
+    const resultText = completion.choices[0]?.message?.content || '{}';
+    res.json(JSON.parse(resultText));
+  } catch (error: any) {
+    console.error('[ARCH] Copilot error:', error.message);
+    res.status(500).json({ error: 'Failed to generate suggestions' });
   }
 });
 

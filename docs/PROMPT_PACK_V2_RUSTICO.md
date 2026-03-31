@@ -289,6 +289,158 @@ Style: minimal architectural photography, wet stone surfaces, steamy atmosphere,
 
 ---
 
+## SERIE D — VISTAS ESPECIFICAS SOLICITADAS (3 renders)
+
+### D1 — Vista de Cima: Ofuro + 3 Suites + Varanda 360°
+```
+Aerial photorealistic render (directly from above, top-down view) of a hexagonal house in rural Minas Gerais, Brazil.
+
+ROOFTOP (top layer visible):
+- Round glass dome (2.5m diameter) enclosing a hot tub, visible from above, warm water with gentle steam
+- Terracotta tile floor around the dome, tropical plants in pots at the edges
+
+SECOND FLOOR (visible through partial cutaway / transparent roof sections):
+- Hexagonal floor plan divided into 3 EQUAL sectors, like pie slices
+- Each sector = 1 suite with: king bed, small closet (2m x 1.5m), ensuite bathroom with stone shower
+- 360-DEGREE WRAPAROUND BALCONY connecting all 3 suites — continuous balcony running around the entire hexagonal perimeter
+- Iron railing with bamboo privacy screens between suites
+- Each suite has a sliding glass door opening onto the balcony
+
+GROUND FLOOR (partially visible at edges):
+- Open plan living room + kitchen visible through glass walls at ground level
+- Central spiral staircase core visible connecting all 3 levels
+
+SURROUNDINGS:
+- Dense tropical garden with no grass lawn
+- Stone paths connecting to churrasqueira area 10m from house
+- Kitchen garden with 4 raised beds visible
+- Fire pit area with circular stone bench 15m from house
+- NO pool
+
+Style: professional architectural plan/drone photography, top-down perspective, clear room division visible, golden hour light casting subtle shadows, annotations would be welcome
+```
+
+---
+
+### D2 — Cozinha Aberta + Churrasqueira + Area da Lareira
+```
+Photorealistic architectural render. Ground floor of a hexagonal stone house opening to front garden area, rural Minas Gerais, Brazil.
+
+KITCHEN (inside, visible through open walls):
+- Open-plan kitchen connected to living room, NO walls between them
+- Stone countertops (quartzite slab), open shelving in reclaimed wood
+- Exposed wood beam ceiling (caibro aparente), hand-hewn
+- Large kitchen island with rustic iron bar stools (4 seats)
+- Floor-to-ceiling glass sliding doors fully open, connecting interior to exterior
+
+CHURRASQUEIRA (covered, 3m from kitchen):
+- Built-in BBQ grill in rustic stone and iron, under a wooden pergola with clay tile roof
+- Wood storage rack beside the grill
+- Long reclaimed wood dining table (seats 8) under the pergola
+- View from churrasqueira table directly into the kitchen through open glass doors
+
+LAREIRA / FIRE PIT (15m from house, in garden):
+- Ground-level circular fire pit (1.5m diameter), stone-lined, burning wood logs
+- Circular stone bench seating around fire pit, seats 8-10 people comfortably
+- Positioned far from house (15m) due to smoke
+- Stone path with grass joints connecting house → churrasqueira → fire pit
+- Fire pit surrounded by low ground cover plants, NO tall plants nearby for fire safety
+
+ATMOSPHERE: early evening, fire burning in pit, warm glow from kitchen lights, first stars visible, Minas Gerais hills silhouette in background
+
+Materials: quartzite stone, reclaimed wood, hand-forged iron throughout
+NO pool visible anywhere.
+Style: wide angle architectural photography, warm tones, inviting evening scene
+```
+
+---
+
+### D3 — Secao Transversal (3 Andares)
+```
+Architectural cross-section render of a hexagonal house showing all 3 levels simultaneously, as if the house were sliced in half.
+
+SECTION VIEW (cutaway revealing interior):
+
+GROUND FLOOR (3.2m ceiling height):
+- Left side: open kitchen with stone counters, wood beam ceiling, bar island
+- Center: central spiral staircase in forged iron + stone steps (visible full height)
+- Right side: living room with exposed quartzite stone wall, floor-to-ceiling glass wall facing garden
+- Floor: large slate tiles
+
+SECOND FLOOR (3.0m ceiling height):
+- Left side: suite 1 (king bed, small closet visible)
+- Center: staircase continuing up
+- Right side: suite 2 (king bed, ensuite bathroom with stone shower visible)
+- 360-degree balcony visible wrapping around exterior
+- Floor: wide-plank reclaimed wood
+
+ROOFTOP (2.5m ceiling height):
+- Glass dome enclosure with round hot tub in center
+- Ipe wood deck floor
+- Staircase terminates at iron hatch/door
+- Glass walls showing panoramic landscape view
+
+EXTERIOR visible on both sides:
+- Dense tropical garden at ground level
+- Quartzite stone walls with natural texture
+- Roof: angled with wide overhangs, solar panels on edge
+
+ANNOTATIONS (optional):
+- Heights marked: ground 0m, second floor 3.5m, rooftop 6.8m, peak 9m
+- Materials labeled at key points
+
+Style: architectural section drawing with photorealistic rendering, warm natural light entering from the glass walls, clean white background on cut surfaces
+```
+
+---
+
+## SERIE E — AREA INTERLIGADA (2 renders)
+
+### E1 — Fluxo Cozinha → Sala → Frente da Casa
+```
+Photorealistic architectural render. Interior wide-angle shot showing the entire ground floor flow of a hexagonal stone house.
+
+COMPOSITION (left to right):
+- FAR LEFT: open kitchen with stone island, wood beam ceiling, hanging copper pots
+- CENTER: living room with large area rug, low sofa in natural linen, sound system speakers visible on stone walls, home office desk near window
+- RIGHT: floor-to-ceiling glass wall FULLY OPEN (accordion-fold doors retracted), seamless indoor-outdoor transition
+- BEYOND GLASS: stone terrace → covered churrasqueira 3m away → stone path leading to garden fire pit in background
+
+KEY DETAILS:
+- NO wall division between kitchen and living room — completely open plan
+- Central spiral staircase visible in background
+- Exposed quartzite stone on 2 walls, glass on 2 walls, wood ceiling throughout
+- Floor: continuous large slate tiles running from kitchen through living room to terrace
+- Afternoon light flooding from the open glass wall side
+
+Materials: quartzite, reclaimed wood beams, forged iron details, slate floor
+Style: interior architectural photography, ultra-wide angle, warm afternoon light
+```
+
+---
+
+### E2 — Noite na Frente da Casa (Churrasqueira + Lareira Ativa)
+```
+Photorealistic evening render of the front area of a hexagonal stone house.
+
+SCENE:
+- House glass walls glowing warm amber from inside, kitchen and living room visible
+- Covered churrasqueira area in foreground, fire in the grill, food being prepared
+- Dining table set for 8, string lights hanging from pergola beams
+- 15m away: fire pit blazing, 6 people sitting on stone benches, conversation scene
+- Stone path lit by flush ground lights connecting the areas
+- Stars visible, Milky Way faintly showing over the Minas Gerais hills
+- Dense tropical garden on sides, lit subtly from below
+
+MOOD: warm, social, rustic luxury, a typical weekend evening at the sitio
+
+Materials: stone, wood, iron — all visible and beautiful at night
+NO pool. NO modern minimalism. Rustic and permanent.
+Style: lifestyle architectural photography, bokeh on string lights, long exposure sky
+```
+
+---
+
 ## DICAS DE USO
 
 **Para resultados mais rusticos:**

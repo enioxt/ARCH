@@ -26,9 +26,10 @@ RUN npm install --omit=dev 2>/dev/null || npm install --production
 # Copy built frontend
 COPY --from=builder /app/dist ./dist
 
-# Copy server and AI prompts (needed at runtime)
+# Copy server and AI prompts + lib (needed at runtime)
 COPY server.ts ./
 COPY src/ai/ ./src/ai/
+COPY src/lib/generation-engine.ts ./src/lib/generation-engine.ts
 
 # Copy public assets (presentation page, images)
 COPY public/ ./public/
