@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'path';
 import { createServer as createViteServer } from 'vite';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -21,6 +22,13 @@ const openai = new OpenAI({
     "HTTP-Referer": process.env.APP_URL || "https://arch.egos.ia.br",
     "X-Title": "EGOS Arch",
   }
+});
+
+// --- Static files & presentation page ---
+app.use('/public', express.static(path.join(process.cwd(), 'public')));
+
+app.get('/apresentacao', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'public', 'apresentacao.html'));
 });
 
 // --- API Routes ---
@@ -153,7 +161,6 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     // In production, serve static files from dist
-    const path = await import('path');
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {

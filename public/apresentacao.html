@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EGOS Arch — Arquitetura Assistida por IA</title>
+  <meta name="description" content="Transforme briefings e croquis em renders, plantas e modelos 3D com inteligência artificial. Transparência radical no custo.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0A0E27;
+      --card: #1A2F5A;
+      --card-hover: #223a6a;
+      --blue: #2563EB;
+      --blue-glow: rgba(37, 99, 235, 0.25);
+      --success: #10B981;
+      --warning: #F59E0B;
+      --premium: #8B5CF6;
+      --text: #E2E8F0;
+      --text-muted: #94A3B8;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 100px 24px 80px;
+      overflow: hidden;
+    }
+
+    .hero-border {
+      position: relative;
+      padding: 48px 56px;
+      border-radius: 20px;
+      background: var(--bg);
+      z-index: 1;
+    }
+
+    .hero-border::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, var(--blue), var(--premium), var(--success), var(--blue));
+      background-size: 300% 300%;
+      animation: gradientShift 6s ease infinite;
+      z-index: -1;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #fff 30%, var(--blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero .subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      color: var(--text-muted);
+      margin-top: 8px;
+      font-weight: 400;
+    }
+
+    .badge-wip {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .hero .desc {
+      margin-top: 20px;
+      max-width: 560px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    /* ── Section ── */
+    section {
+      padding: 80px 0;
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    .section-subtitle {
+      color: var(--text-muted);
+      margin-bottom: 48px;
+      font-size: 0.95rem;
+    }
+
+    /* ── Cards Grid ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 32px 28px;
+      transition: transform 0.2s, border-color 0.2s, background 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(37, 99, 235, 0.3);
+      background: var(--card-hover);
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: var(--blue-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      color: var(--blue);
+    }
+
+    .card-icon svg { width: 22px; height: 22px; }
+
+    .card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* ── Timeline ── */
+    .timeline {
+      position: relative;
+      padding-left: 48px;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 18px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, var(--blue), var(--premium));
+      border-radius: 2px;
+    }
+
+    .timeline-step {
+      position: relative;
+      margin-bottom: 36px;
+    }
+
+    .timeline-step:last-child { margin-bottom: 0; }
+
+    .step-number {
+      position: absolute;
+      left: -48px;
+      top: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--card);
+      border: 2px solid var(--blue);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--blue);
+    }
+
+    .timeline-step h4 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .timeline-step p {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    /* ── Table ── */
+    .models-table-wrap {
+      overflow-x: auto;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .models-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .models-table thead {
+      background: var(--card);
+    }
+
+    .models-table th {
+      padding: 14px 20px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .models-table td {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .models-table tr:last-child td { border-bottom: none; }
+
+    .models-table tbody tr {
+      transition: background 0.15s;
+    }
+
+    .models-table tbody tr:hover {
+      background: rgba(37, 99, 235, 0.06);
+    }
+
+    .tier-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .tier-economy { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .tier-standard { background: rgba(37, 99, 235, 0.15); color: var(--blue); }
+    .tier-premium { background: rgba(139, 92, 246, 0.15); color: var(--premium); }
+
+    .price { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+
+    /* ── Transparency Card ── */
+    .transparency-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 40px;
+      max-width: 700px;
+    }
+
+    .transparency-card .highlight {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .transparency-card .highlight span {
+      color: var(--success);
+    }
+
+    .transparency-card .example {
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin: 20px 0;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      color: var(--success);
+    }
+
+    .transparency-card .note {
+      color: var(--text-muted);
+      font-size: 0.88rem;
+    }
+
+    /* ── Case Study ── */
+    .case-study {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 40px;
+    }
+
+    .case-study h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .case-study .case-desc {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      margin-bottom: 28px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat {
+      text-align: center;
+      padding: 20px 12px;
+      background: rgba(37, 99, 235, 0.08);
+      border-radius: 10px;
+      border: 1px solid rgba(37, 99, 235, 0.15);
+    }
+
+    .stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--blue);
+    }
+
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .gallery-placeholder {
+      border: 2px dashed rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+    }
+
+    .designs-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .design-tag {
+      padding: 8px 20px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.1);
+      border: 1px solid rgba(37, 99, 235, 0.25);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--blue);
+    }
+
+    /* ── Tech Badges ── */
+    .tech-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .tech-badge {
+      padding: 8px 18px;
+      border-radius: 8px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+
+    .tech-badge:hover {
+      border-color: rgba(37, 99, 235, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    footer a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    footer a:hover { text-decoration: underline; }
+
+    footer p { margin-bottom: 6px; }
+
+    .footer-version {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 640px) {
+      .hero { padding: 60px 16px 48px; }
+      .hero-border { padding: 32px 24px; }
+      section { padding: 48px 0; }
+      .transparency-card, .case-study { padding: 28px 20px; }
+      .models-table th, .models-table td { padding: 10px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-border">
+      <h1>EGOS Arch</h1>
+      <p class="subtitle">Arquitetura Assistida por IA</p>
+      <span class="badge-wip">EM DESENVOLVIMENTO</span>
+      <p class="desc">
+        Transforme briefings e croquis desenhados a mao em renders fotorrealistas,
+        plantas tecnicas e modelos 3D — com transparencia total no custo.
+      </p>
+    </div>
+  </header>
+
+  <!-- O Que E -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">O Que E</h2>
+      <p class="section-subtitle">Do conceito ao entregavel em minutos, nao semanas.</p>
+
+      <div class="cards-grid">
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+          </div>
+          <h3>Briefing &rarr; Projeto</h3>
+          <p>Descreva seu projeto em linguagem natural. A IA interpreta o briefing, extrai ambientes, identifica ambiguidades e propoe solucoes.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+            </svg>
+          </div>
+          <h3>Sketch &rarr; Planta</h3>
+          <p>Faca upload de croquis desenhados a mao. A IA extrai geometria, identifica formas e converte em planta tecnica digital.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/>
+              <path d="M17.8 11.8 20 14"/><path d="M15 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+              <path d="M17.8 6.2 20 4"/><path d="M3 21l9-9"/><path d="M12.2 6.2 10 4"/>
+            </svg>
+          </div>
+          <h3>IA &rarr; Entregaveis</h3>
+          <p>Gere renders fotorrealistas, videos walkthrough, plantas tecnicas e modelos 3D. Escolha o modelo e o nivel de qualidade.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Como Funciona -->
+  <section style="background: rgba(26, 47, 90, 0.15);">
+    <div class="container">
+      <h2 class="section-title">Como Funciona</h2>
+      <p class="section-subtitle">6 passos do briefing ao entregavel.</p>
+
+      <div class="timeline">
+        <div class="timeline-step">
+          <div class="step-number">1</div>
+          <h4>Descreva seu projeto via chat</h4>
+          <p>Converse com o agente arquiteto em linguagem natural. Ele faz perguntas para entender o escopo.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="step-number">2</div>
+          <h4>Faca upload do sketch ou croqui</h4>
+          <p>Desenhe a mao, tire uma foto e envie. A IA reconhece linhas, formas e proporcoes.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="step-number">3</div>
+          <h4>IA analisa e extrai geometria</h4>
+          <p>Visao computacional identifica poligonos, calcula areas e gera a planta base digital.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="step-number">4</div>
+          <h4>Escolha o modelo de IA</h4>
+          <p>Economy, Standard ou Premium — voce decide o equilibrio entre custo e qualidade.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="step-number">5</div>
+          <h4>Gere renders, videos, plantas, 3D</h4>
+          <p>Cada geracao mostra o custo em tempo real. Sem surpresas.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="step-number">6</div>
+          <h4>Exporte em PDF, DOCX, DXF, JSON</h4>
+          <p>Leve seus entregaveis para qualquer software de arquitetura ou engenharia.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modelos de IA -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">Modelos de IA Disponiveis</h2>
+      <p class="section-subtitle">Precos reais de API. Voce paga exatamente o custo + 5% EGOS.</p>
+
+      <div class="models-table-wrap">
+        <table class="models-table">
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Modelo</th>
+              <th>Custo</th>
+              <th>Tier</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td rowspan="3" style="vertical-align: middle; font-weight: 600;">Imagem</td>
+              <td>SDXL</td>
+              <td class="price">$0.002</td>
+              <td><span class="tier-badge tier-economy">Economy</span></td>
+            </tr>
+            <tr>
+              <td>Flux</td>
+              <td class="price">$0.04</td>
+              <td><span class="tier-badge tier-standard">Standard</span></td>
+            </tr>
+            <tr>
+              <td>Imagen 4</td>
+              <td class="price">$0.06</td>
+              <td><span class="tier-badge tier-premium">Premium</span></td>
+            </tr>
+            <tr>
+              <td rowspan="3" style="vertical-align: middle; font-weight: 600;">Video</td>
+              <td>Wan 2.5</td>
+              <td class="price">$0.05/s</td>
+              <td><span class="tier-badge tier-economy">Economy</span></td>
+            </tr>
+            <tr>
+              <td>Kling</td>
+              <td class="price">$0.07/s</td>
+              <td><span class="tier-badge tier-standard">Standard</span></td>
+            </tr>
+            <tr>
+              <td>Veo 3.1</td>
+              <td class="price">$0.10/s</td>
+              <td><span class="tier-badge tier-premium">Premium</span></td>
+            </tr>
+            <tr>
+              <td rowspan="2" style="vertical-align: middle; font-weight: 600;">3D</td>
+              <td>TripoSR</td>
+              <td class="price">$0.07</td>
+              <td><span class="tier-badge tier-economy">Economy</span></td>
+            </tr>
+            <tr>
+              <td>Tripo3D</td>
+              <td class="price">$0.40</td>
+              <td><span class="tier-badge tier-premium">Premium</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Transparencia Radical -->
+  <section style="background: rgba(26, 47, 90, 0.15);">
+    <div class="container">
+      <h2 class="section-title">Transparencia Radical</h2>
+      <p class="section-subtitle">Sem assinatura. Sem surpresas. Custo real + 5%.</p>
+
+      <div class="transparency-card">
+        <p class="highlight">
+          Voce paga o <span>custo real da API</span> + 5% de comissao EGOS.
+        </p>
+        <div class="example">
+          1 projeto completo (4 renders + 1 video 30s): ~R$ 13
+        </div>
+        <p class="note">
+          Cada operacao mostra o custo em tempo real no dashboard antes de voce confirmar.
+          Historico completo de gastos disponivel a qualquer momento.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Projeto Casa Hexagonal -->
+  <section>
+    <div class="container">
+      <h2 class="section-title">Projeto Casa Hexagonal</h2>
+      <p class="section-subtitle">Case study: casa hexagonal de 3 pisos em sitio rural de MG.</p>
+
+      <div class="case-study">
+        <h3>Casa Hexagonal Modular</h3>
+        <p class="case-desc">
+          Residencia de 3 pisos em sitio rural de Minas Gerais.
+          Geometria hexagonal modular com integracao total ao terreno e vista panoramica.
+        </p>
+
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-value">150m&sup2;</div>
+            <div class="stat-label">Construidos</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">R$ 500k</div>
+            <div class="stat-label">Orcamento</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value">3 suites</div>
+            <div class="stat-label">+ ofuro panoramico</div>
+          </div>
+        </div>
+
+        <div class="gallery-placeholder" id="gallery-placeholder">
+          Renders em breve — aguardando geracao
+        </div>
+
+        <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 16px;">
+          3 Designs Propostos
+        </p>
+        <div class="designs-row">
+          <span class="design-tag">Hexagonal</span>
+          <span class="design-tag">Organica</span>
+          <span class="design-tag">Linear Escalonada</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stack Tecnica -->
+  <section style="background: rgba(26, 47, 90, 0.15);">
+    <div class="container">
+      <h2 class="section-title">Stack Tecnica</h2>
+      <p class="section-subtitle">Tecnologias que sustentam o EGOS Arch.</p>
+
+      <div class="tech-grid">
+        <span class="tech-badge">React 19</span>
+        <span class="tech-badge">TypeScript</span>
+        <span class="tech-badge">Vite 6</span>
+        <span class="tech-badge">Tailwind CSS</span>
+        <span class="tech-badge">Zustand</span>
+        <span class="tech-badge">Express</span>
+        <span class="tech-badge">Docker</span>
+        <span class="tech-badge">Gemini</span>
+        <span class="tech-badge">Flux</span>
+        <span class="tech-badge">fal.ai</span>
+        <span class="tech-badge">Together AI</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>Parte do ecossistema <strong>EGOS</strong> &middot; <a href="https://github.com/eniorocha" target="_blank" rel="noopener">GitHub</a></p>
+      <p>Criado por <strong>Enio Rocha</strong></p>
+      <span class="footer-version">Em desenvolvimento ativo — v0.1.0-alpha</span>
+    </div>
+  </footer>
+
+</body>
+</html>
