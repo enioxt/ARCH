@@ -1,0 +1,72 @@
+version: "3.9"
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: egos-sinapi-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-egos_sinapi}
+      POSTGRES_USER: ${DB_USER:-sinapi_user}
+      POSTGRES_PASSWORD: ${DB_PASS:-sinapi_pass}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-sinapi_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - egos-network
+
+  # FastAPI Application
+  sinapi-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: egos-sinapi-api
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${DB_NAME:-egos_sinapi}
+      DB_USER: ${DB_USER:-sinapi_user}
+      DB_PASS: ${DB_PASS:-sinapi_pass}
+      PYTHONUNBUFFERED: 1
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - .:/app
+      - ./downloads:/app/downloads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - egos-network
+    command: >
+      sh -c "pip install -r requirements.txt &&
+             python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # Optional: pgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: egos-sinapi-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@egos.ia
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      - postgres
+    networks:
+      - egos-network
+    profiles:
+      - admin
+
+volumes:
+  postgres_data:
+
+networks:
+  egos-network:
+    driver: bridge

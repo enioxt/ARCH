@@ -137,7 +137,7 @@ async function fetchSINAPIprices(itemName: string, region: string): Promise<Pric
 }
 
 /**
- * Fetch prices from Brave Search API + Firecrawl
+ * Fetch prices from Brave Search API + Firecrawl (ACTIVE INTEGRATION)
  *
  * Workflow:
  * 1. Search via Brave API: https://api.search.brave.com/res/v1/web/search
@@ -148,67 +148,120 @@ async function fetchSINAPIprices(itemName: string, region: string): Promise<Pric
  * - process.env.FIRECRAWL_API_KEY (Authorization Bearer token)
  */
 async function fetchRetailPrices(itemName: string, region: string): Promise<PriceSource | null> {
-  // STEP 1: Search with Brave API
-  // const braveKey = process.env.BRAVE_API_KEY;
-  // if (!braveKey) throw new Error('BRAVE_API_KEY not set');
-  //
-  // const searchResponse = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(itemName)} preço ${region}`, {
-  //   headers: {
-  //     'Accept': 'application/json',
-  //     'X-Subscription-Token': braveKey,
-  //   },
-  // });
-  // const searchResults = await searchResponse.json();
-  // const urls = searchResults.results?.slice(0, 5).map((r: any) => r.url) || [];
-  //
-  // STEP 2: Scrape prices with Firecrawl
-  // const firecrawlKey = process.env.FIRECRAWL_API_KEY;
-  // if (!firecrawlKey) throw new Error('FIRECRAWL_API_KEY not set');
-  //
-  // const scrapedData = await Promise.all(
-  //   urls.map(url =>
-  //     fetch('https://api.firecrawl.dev/v0/scrape', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Authorization': `Bearer ${firecrawlKey}`,
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({
-  //         url,
-  //         formats: ['markdown', 'html'],
-  //         onlyMainContent: true,
-  //       }),
-  //     }).then(r => r.json())
-  //   )
-  // );
-  //
-  // STEP 3: Parse prices from Firecrawl markdown output
-  // const prices = scrapedData
-  //   .map(data => {
-  //     const text = data.markdown || '';
-  //     // Use regex to extract price patterns (R$ XX,XX or similar)
-  //     const priceMatches = text.match(/R\$\s*[\d.,]+/g) || [];
-  //     return priceMatches.map(p => parseFloat(p.replace('R$', '').replace('.', '').replace(',', '.')));
-  //   })
-  //   .flat()
-  //   .filter(p => p > 0);
-  //
-  // STEP 4: Aggregate and return
-  // if (prices.length === 0) return null;
-  // return {
-  //   name: `Market Average (${region})`,
-  //   type: 'retail',
-  //   low: Math.min(...prices),
-  //   mid: prices[Math.floor(prices.length / 2)],
-  //   high: Math.max(...prices),
-  //   url: urls[0],
-  //   confidence: 0.75,
-  // };
+  const braveKey = process.env.BRAVE_API_KEY;
+  const firecrawlKey = process.env.FIRECRAWL_API_KEY;
 
-  // MOCK ONLY - Remove in production
+  // Fallback to mock if APIs not configured
+  if (!braveKey || !firecrawlKey) {
+    logger.warn('Brave or Firecrawl API keys not set, using mock data', { itemName });
+    return getMockRetailPrice(itemName);
+  }
+
+  try {
+    // STEP 1: Search with Brave API
+    const query = `${itemName} preço ${region} "materiais construção" comprar`;
+    const searchResponse = await fetch(
+      `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=5`,
+      {
+        headers: {
+          Accept: 'application/json',
+          'X-Subscription-Token': braveKey,
+        },
+      }
+    );
+
+    if (!searchResponse.ok) {
+      logger.warn('Brave API error', { status: searchResponse.status, item: itemName });
+      return getMockRetailPrice(itemName);
+    }
+
+    const searchResults = await searchResponse.json();
+    const urls = searchResults.results?.slice(0, 3).map((r: any) => r.url) || [];
+
+    if (urls.length === 0) {
+      logger.info('Brave: No results found', { item: itemName, region });
+      return getMockRetailPrice(itemName);
+    }
+
+    // STEP 2: Scrape prices with Firecrawl (limit to 2 URLs to save costs)
+    const scrapedData = await Promise.allSettled(
+      urls.slice(0, 2).map((url) =>
+        fetch('https://api.firecrawl.dev/v1/scrape', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${firecrawlKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            url,
+            formats: ['markdown'],
+            onlyMainContent: true,
+            timeout: 10000,
+          }),
+        }).then((r) => r.json())
+      )
+    );
+
+    // STEP 3: Parse prices from Firecrawl markdown output
+    const prices: number[] = [];
+    scrapedData.forEach((result) => {
+      if (result.status === 'fulfilled' && result.value.data?.markdown) {
+        const text = result.value.data.markdown;
+        // Match price patterns: R$ XX,XX or R$ X.XXX,XX
+        const priceMatches = text.match(/R\$\s*[\d.,]+/g) || [];
+        priceMatches.forEach((match) => {
+          // Convert "R$ 1.520,00" to 1520.00
+          const cleaned = match
+            .replace('R$', '')
+            .trim()
+            .replace(/\./g, '') // Remove thousand separators
+            .replace(',', '.'); // Convert decimal comma to dot
+          const price = parseFloat(cleaned);
+          if (price > 0 && price < 1000000) {
+            // Sanity check
+            prices.push(price);
+          }
+        });
+      }
+    });
+
+    // STEP 4: Aggregate and return
+    if (prices.length === 0) {
+      logger.info('No prices extracted from Firecrawl', { item: itemName, urlsScraped: urls.length });
+      return getMockRetailPrice(itemName);
+    }
+
+    // Calculate statistics
+    prices.sort((a, b) => a - b);
+    const low = prices[0];
+    const high = prices[prices.length - 1];
+    const mid = prices[Math.floor(prices.length / 2)]; // Median
+
+    return {
+      name: `Market Average (${prices.length} prices)`,
+      type: 'retail',
+      low,
+      mid,
+      high,
+      url: urls[0],
+      confidence: Math.min(0.85, 0.6 + prices.length * 0.05), // More prices = higher confidence
+    };
+  } catch (error) {
+    logger.error('Retail price fetch failed', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      item: itemName,
+    });
+    return getMockRetailPrice(itemName);
+  }
+}
+
+/**
+ * Fallback mock prices when APIs unavailable
+ */
+function getMockRetailPrice(itemName: string): PriceSource | null {
   const mockPrices: Record<string, PriceSource> = {
     'Concreto fck 30 MPa': {
-      name: 'Market Average (Leroy Merlin, C&C, Telhanorte)',
+      name: 'Market Average (Mock)',
       type: 'retail',
       low: 480,
       mid: 550,
@@ -216,7 +269,7 @@ async function fetchRetailPrices(itemName: string, region: string): Promise<Pric
       confidence: 0.75,
     },
     'Bloco cerâmico 14cm': {
-      name: 'Market Average (Local suppliers)',
+      name: 'Market Average (Mock)',
       type: 'retail',
       low: 1.3,
       mid: 1.6,
@@ -371,45 +424,75 @@ export async function researchPrices(
   res: Response
 ) {
   try {
-    const { projectId, itemIds, sources = ['sinapi', 'cub', 'retail'] } = req.body;
+    const { projectId, itemIds, sources = ['sinapi', 'retail'], region = 'BR' } = req.body;
     const startTime = Date.now();
 
     let totalCost = 0;
     const results: Record<string, PriceSource[]> = {};
 
-    // MOCK: Fetch prices for each item
-    for (const source of sources) {
-      if (source === 'sinapi') {
-        // TODO: Real SINAPI integration
-        // MOCK ONLY
-        results['Concreto fck 30 MPa'] = [
-          await fetchSINAPIprices('Concreto fck 30 MPa', 'MG'),
-        ].filter(Boolean) as PriceSource[];
-        totalCost += 0.05; // Mock API cost
-      } else if (source === 'retail') {
-        // TODO: Real Exa + Firecrawl integration
-        // const exaResults = await exa.search(itemName);
-        // const prices = await firecrawl.extractPrices(exaResults);
-        // MOCK ONLY
-        results['Concreto fck 30 MPa'] = [
-          ...(results['Concreto fck 30 MPa'] || []),
-          await fetchRetailPrices('Concreto fck 30 MPa', 'MG'),
-        ].filter(Boolean) as PriceSource[];
-        totalCost += 0.07; // Mock Exa cost per search
-      } else if (source === 'cub') {
-        // TODO: Real CUB integration
-        // MOCK ONLY
-        totalCost += 0.02;
+    // In production, would fetch real item names from database using itemIds
+    // For now, using mock item list
+    const itemsToResearch = [
+      'Concreto fck 30 MPa',
+      'Bloco cerâmico 14cm',
+      'Aço CA-50',
+      'Tinta acrílica',
+    ];
+
+    // Fetch prices from requested sources in parallel
+    const pricePromises = itemsToResearch.flatMap((itemName) =>
+      sources.map(async (source) => {
+        try {
+          let priceSource: PriceSource | null = null;
+
+          if (source === 'sinapi') {
+            priceSource = await fetchSINAPIprices(itemName, region);
+            totalCost += 0.0; // SINAPI is free (internal API)
+          } else if (source === 'retail') {
+            priceSource = await fetchRetailPrices(itemName, region);
+            totalCost += 0.12; // Brave ($0.005/search) + Firecrawl ($0.01/page * 2 pages)
+          } else if (source === 'cub') {
+            priceSource = await fetchCUBprices(region);
+            totalCost += 0.0; // CUB is free (mock for now)
+          }
+
+          if (priceSource) {
+            return { itemName, priceSource };
+          }
+          return null;
+        } catch (error) {
+          logger.error('Price fetch error', {
+            source,
+            item: itemName,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+          return null;
+        }
+      })
+    );
+
+    // Wait for all price fetches to complete
+    const priceResults = await Promise.all(pricePromises);
+
+    // Group results by item name
+    priceResults.forEach((result) => {
+      if (result) {
+        const { itemName, priceSource } = result;
+        if (!results[itemName]) {
+          results[itemName] = [];
+        }
+        results[itemName].push(priceSource);
       }
-    }
+    });
 
     const latency = Date.now() - startTime;
 
     logger.log({
-      eventName: 'budget_source_fetched',
+      eventName: 'budget_prices_researched',
       projectId,
       sourcesQueried: sources,
       itemsUpdated: Object.keys(results).length,
+      totalPricesFetched: Object.values(results).flat().length,
       latencyMs: latency,
       costUsd: totalCost,
     });
@@ -426,6 +509,7 @@ export async function researchPrices(
       latency,
     });
   } catch (error: any) {
+    logger.error('Research prices failed', { error: error.message });
     res.status(500).json({
       success: false,
       error: error.message || 'Failed to research prices',
