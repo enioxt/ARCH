@@ -108,11 +108,11 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     defaultWidth: 1024,
     defaultHeight: 1024,
   },
-  'flux-schnell-together': {
-    name: 'FLUX Schnell (Together)',
+  'flux-schnell-free': {
+    name: 'FLUX Schnell FREE',
     provider: 'together',
     type: 'image',
-    endpoint: 'black-forest-labs/FLUX.1-schnell-Free',
+    endpoint: 'black-forest-labs/FLUX.1-schnell',
     costPerUnit: 0.0,
     defaultWidth: 1024,
     defaultHeight: 1024,
@@ -123,7 +123,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     name: 'Imagen 4.0 Fast',
     provider: 'google',
     type: 'image',
-    endpoint: 'imagen-4.0-generate-preview-05-20',
+    endpoint: 'imagen-4.0-generate-001',
     costPerUnit: 0.02,
     defaultWidth: 1024,
     defaultHeight: 1024,
@@ -132,7 +132,7 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
     name: 'Imagen 4.0 Ultra',
     provider: 'google',
     type: 'image',
-    endpoint: 'imagen-4.0-ultra-generate-exp-05-20',
+    endpoint: 'imagen-4.0-ultra-generate-001',
     costPerUnit: 0.06,
     defaultWidth: 1024,
     defaultHeight: 1024,
@@ -172,19 +172,30 @@ export const MODEL_CONFIGS: Record<string, ModelConfig> = {
 // Provider implementations
 // ---------------------------------------------------------------------------
 
+/**
+ * fal.ai uses an async queue pattern:
+ * 1. POST to queue.fal.run → get request_id + response_url
+ * 2. Poll response_url until status is 'COMPLETED'
+ * 3. GET the result
+ */
 async function generateFal(
   config: ModelConfig,
   req: GenerationRequest,
   apiKey: string
 ): Promise<GenerationResult> {
   const start = Date.now();
+  const headers = {
+    'Authorization': `Key ${apiKey}`,
+    'Content-Type': 'application/json',
+  };
 
   const body: Record<string, unknown> = {
     prompt: req.prompt,
-    image_size: {
-      width: req.width ?? config.defaultWidth,
-      height: req.height ?? config.defaultHeight,
-    },
+    image_size: config.type === 'image'
+      ? { width: req.width ?? config.defaultWidth, height: req.height ?? config.defaultHeight }
+      : undefined,
+    num_images: 1,
+    output_format: 'jpeg',
   };
 
   if (req.negativePrompt) {
@@ -192,29 +203,64 @@ async function generateFal(
   }
 
   if (config.type === 'video') {
-    body.num_frames = (req.durationSeconds ?? 5) * 24; // ~24fps
-    body.duration = req.durationSeconds ?? 5;
+    delete body.image_size;
+    delete body.num_images;
+    delete body.output_format;
+    body.aspect_ratio = '16:9';
+    body.duration = String(req.durationSeconds ?? 5);
+    body.resolution = '1080p';
   }
 
   if (req.referenceImage) {
     body.image_url = req.referenceImage;
   }
 
-  const response = await fetch(`https://fal.run/${config.endpoint}`, {
+  // Step 1: Submit to queue
+  const submitRes = await fetch(`https://queue.fal.run/${config.endpoint}`, {
     method: 'POST',
-    headers: {
-      'Authorization': `Key ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(body),
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`fal.ai error ${response.status}: ${errorText}`);
+  if (!submitRes.ok) {
+    const errorText = await submitRes.text();
+    throw new Error(`fal.ai submit error ${submitRes.status}: ${errorText}`);
   }
 
-  const data = await response.json();
+  const { request_id, response_url } = await submitRes.json();
+
+  // Step 2: Poll for completion (max 5 minutes)
+  const maxWaitMs = 300_000;
+  const pollIntervalMs = 2000;
+  let elapsed = 0;
+
+  while (elapsed < maxWaitMs) {
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
+    elapsed += pollIntervalMs;
+
+    const statusRes = await fetch(
+      `https://queue.fal.run/${config.endpoint}/requests/${request_id}/status`,
+      { headers: { 'Authorization': `Key ${apiKey}` } }
+    );
+
+    if (!statusRes.ok) continue;
+
+    const statusData = await statusRes.json();
+    if (statusData.status === 'COMPLETED') break;
+    if (statusData.status === 'FAILED') {
+      throw new Error(`fal.ai generation failed: ${statusData.error || 'unknown error'}`);
+    }
+  }
+
+  // Step 3: Get result
+  const resultRes = await fetch(response_url, { headers: { 'Authorization': `Key ${apiKey}` } });
+
+  if (!resultRes.ok) {
+    const errorText = await resultRes.text();
+    throw new Error(`fal.ai result error ${resultRes.status}: ${errorText}`);
+  }
+
+  const data = await resultRes.json();
   const durationMs = Date.now() - start;
 
   // fal.ai returns images in data.images[0].url and videos in data.video.url
