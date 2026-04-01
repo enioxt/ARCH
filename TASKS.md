@@ -10,32 +10,35 @@
 
 ### P0 — Blockers (Must ship this sprint)
 
-- [ ] **ARCH-001** — Implementar módulo de orçamento inteligente
+- [x] **ARCH-001** — Implementar módulo de orçamento inteligente
   - **Owner:** Enio
   - **Complexity:** HIGH
   - **Dependencies:** APIs Exa, Firecrawl, Perplexity
   - **Deliverables:**
-    - 4 camadas: busca → normalização → cálculo → relatório
-    - 3 cenários: econômico / padrão / premium
-    - Integração SINAPI, CUB, ORSE, SICRO
-    - View "Orçamento" no dashboard
-    - Endpoints: `/api/budget/*`
-    - Telemetria EGOS completa
+    - ✅ 4 camadas: busca → normalização → cálculo → relatório
+    - ✅ 3 cenários: econômico / padrão / premium
+    - ✅ Integração SINAPI, CUB, ORSE, SICRO (SINAPI em uso)
+    - ✅ View "Orçamento" no dashboard (BudgetView.tsx)
+    - ✅ Endpoints: `/api/budget/*` (9 endpoints implementados)
+    - ✅ Exports PDF/Excel/CSV/JSON (BudgetExportUtils)
+    - ✅ Telemetria EGOS completa (20+ event names)
+    - ⏳ PostgreSQL persistence (config pronta, tables pending)
   - **Spec:** `/home/enio/Downloads/compiladochats/egos_arch_modulo_orcamento_v1.md`
-  - **Status:** 🟡 Planning
-  - **ETA:** 2026-04-15
+  - **Status:** 🟢 DONE (MVP) — Ready for integration testing
+  - **Commits:** d20b7fb, 89d9f6e, f375ee7
+  - **Completed:** 2026-04-01
 
-- [ ] **ARCH-002** — Criar governance files (EGOS compliance)
+- [x] **ARCH-002** — Criar governance files (EGOS compliance)
   - **Owner:** Enio
   - **Complexity:** LOW
   - **Deliverables:**
-    - TASKS.md (this file)
-    - docs/CAPABILITY_REGISTRY.md
-    - docs/SYSTEM_MAP.md
-    - .windsurfrules
-    - .guarani/IDENTITY.md
-  - **Status:** 🟢 In Progress
-  - **ETA:** 2026-03-31
+    - ✅ TASKS.md (this file)
+    - ✅ docs/CAPABILITY_REGISTRY.md (362 lines)
+    - ✅ docs/SYSTEM_MAP.md (541 lines)
+    - ✅ .windsurfrules (536 lines)
+    - ✅ .guarani/IDENTITY.md (306 lines)
+  - **Status:** 🟢 DONE
+  - **Completed:** 2026-03-31
 
 - [ ] **ARCH-003** — Resolver drift de governança (14 issues from 852)
   - **Owner:** Enio
