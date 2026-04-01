@@ -745,6 +745,82 @@ async function exportBudgetExcel(req: Request, res: Response) {
 }
 
 /**
+ * GET /api/budget
+ * List all budgets (for admin dashboard)
+ */
+async function getAllBudgets(req: Request, res: Response) {
+  try {
+    const limit = parseInt(req.query.limit as string) || 50;
+    const offset = parseInt(req.query.offset as string) || 0;
+    const projects = await budgetDb.listProjects(limit, offset);
+
+    res.json({
+      success: true,
+      data: projects,
+      count: projects.length,
+      limit,
+      offset,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+}
+
+/**
+ * GET /api/budget/summary
+ * Summary statistics (mock data for now)
+ */
+async function getBudgetSummary(req: Request, res: Response) {
+  try {
+    const summary = {
+      totalBudgets: 0,
+      totalValue: 0,
+      averageBudget: 0,
+      byRegion: {
+        BR: 0,
+        MG: 0,
+        SP: 0,
+      },
+      byStatus: { draft: 0, validated: 0, locked: 0 },
+    };
+
+    res.json({
+      success: true,
+      data: summary,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+}
+
+/**
+ * GET /api/budget/transactions
+ * Recent budget activity/transactions (mock)
+ */
+async function getBudgetTransactions(req: Request, res: Response) {
+  try {
+    const transactions = [];
+
+    res.json({
+      success: true,
+      data: transactions,
+      count: 0,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+}
+
+/**
  * Register budget routes on Express app
  */
 export function registerBudgetRoutes(app: Express) {
@@ -752,6 +828,9 @@ export function registerBudgetRoutes(app: Express) {
   app.post('/api/budget/build-from-project', buildBudgetFromProject);
   app.post('/api/budget/research-prices', researchPrices);
   app.post('/api/budget/recalculate', recalculateBudget);
+  app.get('/api/budget', getAllBudgets);
+  app.get('/api/budget/summary', getBudgetSummary);
+  app.get('/api/budget/transactions', getBudgetTransactions);
   app.get('/api/budget/:projectId/latest', getLatestBudget);
   app.get('/api/budget/:projectId/versions', getBudgetVersions);
   app.post('/api/budget/:projectId/lock', lockBudget);
