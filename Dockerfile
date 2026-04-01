@@ -23,14 +23,15 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json* ./
 RUN npm install --omit=dev 2>/dev/null || npm install --production
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 # Copy built frontend
 COPY --from=builder /app/dist ./dist
 
-# Copy server and AI prompts + lib (needed at runtime)
+# Copy server and all source files (needed at runtime for budget API, etc)
 COPY server.ts ./
-COPY src/ai/ ./src/ai/
-COPY src/lib/generation-engine.ts ./src/lib/generation-engine.ts
-COPY src/lib/prompt-generator.ts ./src/lib/prompt-generator.ts
+COPY src/ ./src/
 
 # Copy public assets (presentation page, images)
 COPY public/ ./public/
@@ -38,6 +39,6 @@ COPY public/ ./public/
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+  CMD curl -f http://localhost:3000/api/health || exit 1
 
 CMD ["npx", "tsx", "server.ts"]
