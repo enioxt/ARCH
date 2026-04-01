@@ -39,6 +39,7 @@ import {
   scenarioDifference,
 } from './budget-calculator';
 import { logger } from '../telemetry/logger';
+import { PriceSource } from '../schemas/budget.schema';
 
 /**
  * MOCK DATA SOURCES (will be replaced by real APIs)
@@ -51,16 +52,6 @@ import { logger } from '../telemetry/logger';
  * - firecrawl: Firecrawl for supplier website scraping
  * - perplexity: Perplexity for deep research
  */
-
-interface PriceSource {
-  name: string;
-  type: 'sinapi' | 'cub' | 'orse' | 'supplier' | 'retail';
-  low: number;
-  mid: number;
-  high: number;
-  url?: string;
-  confidence: number;
-}
 
 /**
  * Fetch prices from SINAPI API (REAL INTEGRATION)

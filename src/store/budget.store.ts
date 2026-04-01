@@ -299,11 +299,12 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
       const updatedItems = budget.items.map((item) => {
         if (item.id !== itemId) return item;
 
-        // Recalculate totals based on scenario
-        const basePrice =
-          scenario === 'low' ? item.prices[0]?.low : scenario === 'high' ? item.prices[0]?.high : item.prices[0]?.mid;
+        // Recalculate totals based on scenario (use sources for pricing)
+        const primarySource = item.sources[0];
+        if (!primarySource) return item;
 
-        if (!basePrice) return item;
+        const basePrice =
+          scenario === 'low' ? primarySource.low : scenario === 'high' ? primarySource.high : primarySource.mid;
 
         const totalPrice = basePrice * item.quantity * item.wasteFactor * item.regionalFactor * item.complexityFactor;
 

@@ -204,7 +204,6 @@ export function registerQuotaRoutes(app: Express) {
         recommendations.forEach((rec) => summary.push(rec));
       }
 
-      res.text = summary.join('\n');
       res.setHeader('Content-Type', 'text/plain');
       res.send(summary.join('\n'));
 

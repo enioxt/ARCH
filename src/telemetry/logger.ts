@@ -38,13 +38,17 @@ export const TelemetryEventSchema = z.object({
     // Database events
     'db_query',
   ]),
-  projectId: z.string().uuid().optional(),
+  projectId: z.string().optional(),
+  budgetId: z.string().optional(),
   modelUsed: z.string().optional(),
   provider: z.string().optional(),
   latencyMs: z.number().optional(),
+  latency: z.number().optional(), // Alias for latencyMs
   estimatedCostUsd: z.number().optional(),
+  cost: z.number().optional(), // Alias for estimatedCostUsd
+  costUsd: z.number().optional(), // Another alias
   metadata: z.record(z.string(), z.any()).optional(),
-});
+}).passthrough(); // Allow additional fields
 
 export type TelemetryEvent = z.infer<typeof TelemetryEventSchema>;
 

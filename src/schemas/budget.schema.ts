@@ -50,6 +50,30 @@ export const PricePointSchema = z.object({
 
 export type PricePoint = z.infer<typeof PricePointSchema>;
 
+// Simplified price source (used by budget-api.ts and database)
+export const PriceSourceSchema = z.object({
+  id: z.string().uuid().optional(), // Optional for new sources
+  name: z.string(),
+  type: z.enum(['sinapi', 'cub', 'orse', 'sicro', 'supplier', 'retail', 'internal']),
+  low: z.number().positive(),
+  mid: z.number().positive(),
+  high: z.number().positive(),
+  url: z.string().url().optional(),
+  confidence: z.number().min(0).max(1),
+  region: z.string().optional(), // State code (MG, SP, etc)
+  collectedAt: z.string().datetime().optional(), // When data was collected
+});
+
+export type PriceSource = z.infer<typeof PriceSourceSchema>;
+
+// Historical price point (matches database price_points table)
+export const HistoricalPricePointSchema = z.object({
+  scenario: z.enum(['economico', 'padrao', 'premium']),
+  price: z.number().nonnegative(),
+});
+
+export type HistoricalPricePoint = z.infer<typeof HistoricalPricePointSchema>;
+
 // ============================================================================
 // BUDGET ITEMS
 // ============================================================================
@@ -86,8 +110,8 @@ export const BudgetItemSchema = z.object({
   complexityFactor: z.number().min(0.8).max(1.5).default(1), // Task complexity
 
   // Pricing
-  sources: z.array(CostSourceSchema),
-  prices: z.array(PricePointSchema),
+  sources: z.array(PriceSourceSchema),
+  prices: z.array(HistoricalPricePointSchema),
   chosenScenario: z.enum(['low', 'mid', 'high']),
 
   // Calculated totals
@@ -188,6 +212,7 @@ export const ResearchPricesRequestSchema = z.object({
   sources: z.array(z.enum([
     'sinapi', 'cub', 'orse', 'sicro', 'supplier', 'retail', 'internal'
   ])).optional(),
+  region: z.string().optional(), // Region for price research (MG, SP, BR, etc)
 });
 
 export type ResearchPricesRequest = z.infer<typeof ResearchPricesRequestSchema>;
