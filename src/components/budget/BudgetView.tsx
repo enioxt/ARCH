@@ -17,12 +17,18 @@ import {
   Lock,
   RefreshCw,
   AlertCircle,
-  TrendingUp
+  TrendingUp,
+  ChevronDown,
+  FileText,
+  Sheet,
+  FileJson,
+  FileSpreadsheet
 } from 'lucide-react';
 import { useBudgetStore } from '../../store/budget.store';
 import { useProjectStore } from '../../store/project.store';
 import { BudgetReport } from '../../schemas/budget.schema';
 import { formatBRL, scenarioDifference } from '../../lib/budget-calculator';
+import { BudgetExportUtils } from '../../lib/budget-export';
 import BudgetSummary from './BudgetSummary';
 import ScenarioComparison from './ScenarioComparison';
 import ItemBreakdown from './ItemBreakdown';
@@ -41,6 +47,7 @@ export default function BudgetView() {
   const [budget, setBudget] = useState<BudgetReport | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'summary' | 'items' | 'sources'>('summary');
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   // Initialize budget on project change
   useEffect(() => {
@@ -73,6 +80,28 @@ export default function BudgetView() {
     budget.scenarios[1].total,
     budget.scenarios[2].total
   );
+
+  // Export handlers
+  const handleExport = (format: 'pdf' | 'xlsx' | 'csv' | 'json') => {
+    if (!budget) return;
+
+    switch (format) {
+      case 'pdf':
+        BudgetExportUtils.exportToPDF(budget);
+        break;
+      case 'xlsx':
+        BudgetExportUtils.exportToExcel(budget);
+        break;
+      case 'csv':
+        BudgetExportUtils.exportToCSV(budget);
+        break;
+      case 'json':
+        BudgetExportUtils.exportToJSON(budget);
+        break;
+    }
+
+    setShowExportMenu(false);
+  };
 
   return (
     <div className="h-full overflow-y-auto bg-white">
@@ -112,10 +141,49 @@ export default function BudgetView() {
                 {budget.status === 'locked' ? 'Bloqueado' : 'Bloquear'}
               </button>
 
-              <button className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-100 text-blue-900 hover:bg-blue-200 transition">
-                <Download className="w-4 h-4" />
-                Exportar
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-100 text-blue-900 hover:bg-blue-200 transition"
+                >
+                  <Download className="w-4 h-4" />
+                  Exportar
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+
+                {showExportMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-zinc-200 py-2 z-50">
+                    <button
+                      onClick={() => handleExport('pdf')}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 transition"
+                    >
+                      <FileText className="w-4 h-4 text-red-500" />
+                      Exportar PDF
+                    </button>
+                    <button
+                      onClick={() => handleExport('xlsx')}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 transition"
+                    >
+                      <FileSpreadsheet className="w-4 h-4 text-green-600" />
+                      Exportar Excel
+                    </button>
+                    <button
+                      onClick={() => handleExport('csv')}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 transition"
+                    >
+                      <Sheet className="w-4 h-4 text-blue-500" />
+                      Exportar CSV
+                    </button>
+                    <button
+                      onClick={() => handleExport('json')}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-left text-sm text-zinc-700 hover:bg-zinc-100 transition"
+                    >
+                      <FileJson className="w-4 h-4 text-purple-500" />
+                      Exportar JSON
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

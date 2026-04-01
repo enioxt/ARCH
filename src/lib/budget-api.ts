@@ -40,6 +40,7 @@ import {
 } from './budget-calculator';
 import { logger } from '../telemetry/logger';
 import { PriceSource } from '../schemas/budget.schema';
+import * as budgetDb from './budget-db';
 
 /**
  * MOCK DATA SOURCES (will be replaced by real APIs)
@@ -670,6 +671,80 @@ export async function generateBudgetReport(
 }
 
 /**
+ * Export budget report as PDF
+ * GET /api/budget/:projectId/export/pdf
+ */
+async function exportBudgetPDF(req: Request, res: Response) {
+  try {
+    const { projectId } = req.params;
+    const budget = await budgetDb.getLatestBudget(projectId);
+
+    if (!budget) {
+      return res.status(404).json({
+        success: false,
+        error: 'Budget not found',
+      });
+    }
+
+    // Generate PDF using jsPDF (server-side)
+    // For now, return JSON and let client handle PDF generation
+    // (jsPDF works better in browser for complex rendering)
+    res.json({
+      success: true,
+      message: 'Use client-side BudgetExportUtils.exportToPDF() for best results',
+      data: budget,
+    });
+
+    logger.log({
+      eventName: 'budget_exported',
+      projectId,
+      format: 'pdf',
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+}
+
+/**
+ * Export budget report as Excel
+ * GET /api/budget/:projectId/export/xlsx
+ */
+async function exportBudgetExcel(req: Request, res: Response) {
+  try {
+    const { projectId } = req.params;
+    const budget = await budgetDb.getLatestBudget(projectId);
+
+    if (!budget) {
+      return res.status(404).json({
+        success: false,
+        error: 'Budget not found',
+      });
+    }
+
+    // Return JSON for client-side Excel generation
+    res.json({
+      success: true,
+      message: 'Use client-side BudgetExportUtils.exportToExcel() for best results',
+      data: budget,
+    });
+
+    logger.log({
+      eventName: 'budget_exported',
+      projectId,
+      format: 'xlsx',
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+}
+
+/**
  * Register budget routes on Express app
  */
 export function registerBudgetRoutes(app: Express) {
@@ -681,4 +756,8 @@ export function registerBudgetRoutes(app: Express) {
   app.get('/api/budget/:projectId/versions', getBudgetVersions);
   app.post('/api/budget/:projectId/lock', lockBudget);
   app.post('/api/budget/:projectId/report', generateBudgetReport);
+
+  // Export routes
+  app.get('/api/budget/:projectId/export/pdf', exportBudgetPDF);
+  app.get('/api/budget/:projectId/export/xlsx', exportBudgetExcel);
 }
