@@ -1,0 +1,38 @@
+#!/bin/sh
+# EGOS Pre-Commit (profile: leaf)
+# Source: /home/enio/egos/.husky/_profiles/leaf.sh
+#
+# Para customizar checks adicionais SEM modificar o profile global,
+# adicione abaixo do "source" (ex: validações específicas deste repo).
+
+EGOS_HUSKY="/home/enio/egos/.husky"
+export EGOS_HUSKY
+
+if [ ! -f "$EGOS_HUSKY/_profiles/leaf.sh" ]; then
+  echo "Warning: EGOS pre-commit profile nao encontrado em $EGOS_HUSKY"
+  echo "   Pulando pre-commit. Clone egos em /home/enio/egos ou ajuste EGOS_HUSKY."
+  exit 0
+fi
+
+bash "$EGOS_HUSKY/_profiles/leaf.sh"
+
+# BEGIN egos-phantom-done
+# DISSEMINATE-INTEGRITY-002 — Propagated from kernel 2026-06-10
+# Bloqueia task [x] marcada sem evidencia verificavel em TASKS.md (phantom-done).
+# Evidencia aceita: SHA hex 7-40 chars | Closes/Fixes/Resolves | PR # | URL | "commit <sha>"
+# Override consciente: EGOS_PROVENANCE_OVERRIDE=1
+if [ -f "TASKS.md" ]; then
+  _new_done=$(git diff --cached -U0 -- TASKS.md 2>/dev/null | grep -E '^\+- \[x\]' || true)
+  if [ -n "$_new_done" ]; then
+    _phantom=$(echo "$_new_done" | grep -vE '\b[0-9a-f]{7,40}\b|Closes|Fixes|Resolves|PR #|https?://|commit ' || true)
+    if [ -n "$_phantom" ]; then
+      echo "  PROVENANCIA (phantom-done): task(s) marcada(s) [x] SEM evidencia verificavel:"
+      echo "$_phantom" | sed 's/^\+- \[x\] \?/    /' | cut -c1-100 | head -5
+      echo "     Regra: done exige SHA, arquivo, Closes/Fixes ou prova. Bare data nao conta."
+      echo "     -> Reabra [ ] OU adicione evidencia na linha. Override: EGOS_PROVENANCE_OVERRIDE=1"
+      [ "${EGOS_PROVENANCE_OVERRIDE:-0}" = "1" ] || { echo "  BLOCKED: phantom-done."; exit 1; }
+      echo "  EGOS_PROVENANCE_OVERRIDE=1 -- phantom-done permitido conscientemente."
+    fi
+  fi
+fi
+# END egos-phantom-done
