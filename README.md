@@ -1,3 +1,5 @@
+> **[ARCHIVED]** Este repositório foi arquivado oficialmente em 2026-06-11 durante a auditoria EGOS e serve apenas como referência histórica/arquitetural.
+
 # EGOS Arch
 
 > **Versão:** 0.2.0 | **Atualizado:** 2026-05-01 | **Status:** PAUSA
